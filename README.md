@@ -53,6 +53,79 @@ CGC's main **FastAPI** service.
 
 ---
 
+## Database Migrations
+
+We use [Alembic](https://alembic.sqlalchemy.org/) for database schema management.
+
+### Quick Commands
+
+**Generate migration automatically (when you add/modify models):**
+```bash
+alembic revision --autogenerate -m "Description of changes"
+```
+
+**Generate empty migration (if autogenerate fails):**
+```bash
+alembic revision -m "Description of changes"
+```
+
+**Apply migrations to database:**
+```bash
+alembic upgrade head
+```
+
+**Check migration status:**
+```bash
+alembic current
+```
+
+**Rollback last migration:**
+```bash
+alembic downgrade -1
+```
+
+### Workflow
+
+1. **Add or modify models** in `app/models/`
+2. **Import your models** in `alembic/env.py` (crucial step!)
+   ```python
+   # Import all your models here so they are registered with Base.metadata
+   from app.models.user import User
+   from app.models.your_new_model import YourNewModel  # Add new models here
+   ```
+3. **Generate migration** with `alembic revision --autogenerate -m "Description"`
+4. **Review the generated migration** in `alembic/versions/`
+5. **Apply to database** with `alembic upgrade head`
+
+### Troubleshooting
+
+If `--autogenerate` fails with database connection errors:
+
+1. **Create empty migration:**
+   ```bash
+   alembic revision -m "Description of changes"
+   ```
+
+2. **Manually edit** the migration file in `alembic/versions/`:
+   ```python
+   def upgrade() -> None:
+       op.create_table('your_table',
+           sa.Column('id', sa.Integer(), nullable=False),
+           # Add your columns here
+           sa.PrimaryKeyConstraint('id')
+       )
+
+   def downgrade() -> None:
+       op.drop_table('your_table')
+   ```
+
+### Important Notes
+
+- **Models must be imported** in `alembic/env.py` to be detected
+- **All models must inherit from `Base`** (imported from `app.db.base`)
+
+---
+
 ## Adding Packages
 
 To add a new Python package:
