@@ -70,6 +70,24 @@ To add a new Python package:
 3. Commit the updated file to version control.
 
 ---
+## Running Tests
+
+We use [pytest](https://docs.pytest.org/).
+
+**Run all tests**
+    pytest
+
+**Verbose output**
+    pytest -v
+
+**Run a specific file or test**
+    pytest app/tests/test_main.py
+    pytest -k "test_read_root"
+
+**Coverage**
+    pytest --cov=app
+
+---
 
 ## Documentation
 
