@@ -10,5 +10,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  dev:
+    image: cosmtrek/air
+    container_name: go_air_dev
+    working_dir: /app
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    command: air
+
 volumes:
   postgres_data:

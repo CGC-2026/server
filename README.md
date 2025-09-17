@@ -1,96 +1,74 @@
-# 🚀 CGC Server
+# CGC-2026 Server
 
-CGC's main **FastAPI** service.
-
----
+A Go-based HTTP server with basic health endpoint.
 
 ## Prerequisites
 
-1. **Python (v3.13+)**  
-   Download: [python.org/downloads](https://www.python.org/downloads/)
+- Go 1.25 or higher: https://go.dev/dl/
 
-2. **VSCode Python Extension**  
-   Install: [marketplace.cursorapi.com](https://marketplace.cursorapi.com/items/?itemName=ms-python.python)
+## Package Management
 
-3. **Docker Desktop**  
-   Download: [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)  
-   → Make sure Docker is running in the background
+This project uses Go Modules for dependency management. Here's how to work with packages:
 
----
+### Adding a New Package
+To add a new dependency to the project:
+```bash
+go get github.com/example/package
+```
+This will automatically update your `go.mod` and `go.sum` files.
 
-## Development Setup
+### Installing Dependencies
+After cloning the repository, install all dependencies:
+```bash
+go mod download
+```
 
-1. **Create a virtual environment**
-   - macOS: `python3 -m venv .venv`
-   - Windows: `python -m venv .venv`
+### Updating Dependencies
+To update dependencies and clean up unused ones:
+```bash
+go mod tidy
+```
+This command ensures your `go.mod` file correctly reflects all dependencies used in the codebase.
 
-2. **Activate the environment**
-   - macOS/Linux: `source .venv/bin/activate`
-   - Windows (cmd): `.venv\Scripts\activate`
+## Using Make
 
-3. **Set Python interpreter in VSCode**  
-   Guide: [Select and Activate Environment](https://code.visualstudio.com/docs/python/environments#_select-and-activate-an-environment)
+This project includes a Makefile with common commands:
 
-4. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+make build    # Build the application
+make run      # Run the application
+make dev      # Run the application with live reload
+make test     # Run tests
+make clean    # Clean build artifacts
+```
 
-5. **Create environment file**
-   ```bash
-   cp .env.example .env
-   ```
+## Live Reload for Development
 
-6. **Start PostgreSQL (via Docker)**
-   ```bash
-   docker-compose up -d
-   ```
+This project supports live reload using [Air](https://github.com/air-verse/air) via Docker. This allows you to automatically rebuild and restart the server when code changes are detected.
 
-7. **Run the server**
-   ```bash
-   fastapi dev app/main.py
-   ```
+### Using Live Reload
 
----
+To use live reload, simply run:
 
-## Adding Packages
+```bash
+# Using the make command (recommended)
+make dev
 
-To add a new Python package:
+# Or directly with docker-compose
+docker-compose up dev
+```
 
-1. Install the package:
-   ```bash
-   pip install package-name
-   ```
+The configuration for Air is in the `.air.toml` file in the project root. No need to install Air locally as it runs in a Docker container.
 
-2. Save to `requirements.txt`:
-   ```bash
-   pip freeze > requirements.txt
-   ```
+## Project Structure
 
-3. Commit the updated file to version control.
-
----
-## Running Tests
-
-We use [pytest](https://docs.pytest.org/).
-
-**Run all tests**
-    pytest
-
-**Verbose output**
-    pytest -v
-
-**Run a specific file or test**
-    pytest app/tests/test_main.py
-    pytest -k "test_read_root"
-
-**Coverage**
-    pytest --cov=app
-
----
-
-## Documentation
-
-- **FastAPI**: [https://fastapi.tiangolo.com](https://fastapi.tiangolo.com)
-
----
+- `/cmd/server`: Entry point for the application
+- `/internal`: Internal packages not meant for external use
+  - `/app`: Core application logic
+    - `/handlers`: Feature-specific HTTP handlers
+    - `/router`: Route registration and organization
+  - `/log`: Logging utilities
+  - `/http`: HTTP utilities and handlers
+    - `/middleware`: HTTP middleware components
+    - `/responses`: Standardized HTTP response helpers
+- `/api`: API definitions and documentation
