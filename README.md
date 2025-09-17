@@ -1,169 +1,90 @@
-# 🚀 CGC Server
+# CGC-2026 Server
 
-CGC's main **FastAPI** service.
-
----
+A Go-based HTTP server with basic health endpoint.
 
 ## Prerequisites
 
-1. **Python (v3.13+)**  
-   Download: [python.org/downloads](https://www.python.org/downloads/)
+- Go 1.25 or higher
 
-2. **VSCode Python Extension**  
-   Install: [marketplace.cursorapi.com](https://marketplace.cursorapi.com/items/?itemName=ms-python.python)
+## Running the Server
 
-3. **Docker Desktop**  
-   Download: [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)  
-   → Make sure Docker is running in the background
+To run the server, navigate to the project root and execute:
 
----
-
-## Development Setup
-
-1. **Create a virtual environment**
-   - macOS: `python3 -m venv .venv`
-   - Windows: `python -m venv .venv`
-
-2. **Activate the environment**
-   - macOS/Linux: `source .venv/bin/activate`
-   - Windows (cmd): `.venv\Scripts\activate`
-
-3. **Set Python interpreter in VSCode**  
-   Guide: [Select and Activate Environment](https://code.visualstudio.com/docs/python/environments#_select-and-activate-an-environment)
-
-4. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-5. **Create environment file**
-   ```bash
-   cp .env.example .env
-   ```
-
-6. **Start PostgreSQL (via Docker)**
-   ```bash
-   docker-compose up -d
-   ```
-
-7. **Run the server**
-   ```bash
-   fastapi dev app/main.py
-   ```
-
----
-
-## Database Migrations
-
-We use [Alembic](https://alembic.sqlalchemy.org/) for database schema management.
-
-### Quick Commands
-
-**Generate migration automatically (when you add/modify models):**
 ```bash
-alembic revision --autogenerate -m "Description of changes"
+# From the server directory
+go run cmd/server/main.go
 ```
 
-**Generate empty migration (if autogenerate fails):**
+The server will start on port 8080 by default.
+
+## Testing the Health Endpoint
+
+You can test the health endpoint using curl:
+
 ```bash
-alembic revision -m "Description of changes"
+curl http://localhost:8080/health
 ```
 
-**Apply migrations to database:**
-```bash
-alembic upgrade head
+Expected response:
+
+```json
+{
+  "status": "OK",
+  "timestamp": "2025-09-17T12:34:56Z"
+}
 ```
 
-**Check migration status:**
+## Package Management
+
+This project uses Go Modules for dependency management. Here's how to work with packages:
+
+### Adding a New Package
+
+To add a new dependency to the project:
+
 ```bash
-alembic current
+go get github.com/example/package
 ```
 
-**Rollback last migration:**
+This will automatically update your `go.mod` and `go.sum` files.
+
+### Installing Dependencies
+
+After cloning the repository, install all dependencies:
+
 ```bash
-alembic downgrade -1
+go mod download
 ```
 
-### Workflow
+### Updating Dependencies
 
-1. **Add or modify models** in `app/models/`
-2. **Import your models** in `alembic/env.py` (crucial step!)
-   ```python
-   # Import all your models here so they are registered with Base.metadata
-   from app.models.user import User
-   from app.models.your_new_model import YourNewModel  # Add new models here
-   ```
-3. **Generate migration** with `alembic revision --autogenerate -m "Description"`
-4. **Review the generated migration** in `alembic/versions/`
-5. **Apply to database** with `alembic upgrade head`
+To update dependencies and clean up unused ones:
 
-### Troubleshooting
+```bash
+go mod tidy
+```
 
-If `--autogenerate` fails with database connection errors:
+This command ensures your `go.mod` file correctly reflects all dependencies used in the codebase.
 
-1. **Create empty migration:**
-   ```bash
-   alembic revision -m "Description of changes"
-   ```
+### Building the Application
 
-2. **Manually edit** the migration file in `alembic/versions/`:
-   ```python
-   def upgrade() -> None:
-       op.create_table('your_table',
-           sa.Column('id', sa.Integer(), nullable=False),
-           # Add your columns here
-           sa.PrimaryKeyConstraint('id')
-       )
+To build an executable:
 
-   def downgrade() -> None:
-       op.drop_table('your_table')
-   ```
+```bash
+go build -o server cmd/server/main.go
+```
 
-### Important Notes
+## API Documentation
 
-- **Models must be imported** in `alembic/env.py` to be detected
-- **All models must inherit from `Base`** (imported from `app.db.base`)
+The API is documented using OpenAPI specification available at `api/openaapi/openapi.yml`.
 
----
+## Project Structure
 
-## Adding Packages
-
-To add a new Python package:
-
-1. Install the package:
-   ```bash
-   pip install package-name
-   ```
-
-2. Save to `requirements.txt`:
-   ```bash
-   pip freeze > requirements.txt
-   ```
-
-3. Commit the updated file to version control.
-
----
-## Running Tests
-
-We use [pytest](https://docs.pytest.org/).
-
-**Run all tests**
-    pytest
-
-**Verbose output**
-    pytest -v
-
-**Run a specific file or test**
-    pytest app/tests/test_main.py
-    pytest -k "test_read_root"
-
-**Coverage**
-    pytest --cov=app
-
----
-
-## Documentation
-
-- **FastAPI**: [https://fastapi.tiangolo.com](https://fastapi.tiangolo.com)
-
----
+- `/cmd/server`: Entry point for the application
+- `/internal`: Internal packages not meant for external use
+  - `/app`: Core application logic
+  - `/log`: Logging utilities
+  - `/http`: HTTP utilities and handlers
+    - `/middleware`: HTTP middleware components
+    - `/responses`: Standardized HTTP response helpers
+- `/api`: API definitions and documentation
