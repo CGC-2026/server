@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"server/internal/app/router"
 	"server/internal/http/middleware"
 	"server/internal/log"
 )
@@ -37,12 +38,13 @@ func DefaultServerConfig() ServerConfig {
 func NewServer(config ServerConfig) *Server {
 	logger := log.NewStandardLogger()
 
-	mux := http.NewServeMux()
+	// Create router and register routes
+	r := router.New(logger)
+	r.RegisterRoutes()
 
-	RegisterRoutes(mux, logger)
-
-	// Apply JSON middleware
-	handler := middleware.JSONMiddleware(mux)
+	// Apply middleware to router
+	handler := r.Handler()
+	handler = middleware.JSONMiddleware(handler)
 
 	srv := &http.Server{
 		Addr:           ":" + config.Port,
@@ -60,7 +62,7 @@ func NewServer(config ServerConfig) *Server {
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
-	s.logger.Info("Starting server on port %s", s.server.Addr)
+	s.logger.Info("Starting server at http://localhost%s", s.server.Addr)
 	return s.server.ListenAndServe()
 }
 
