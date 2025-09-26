@@ -77,6 +77,7 @@ This project includes a Makefile with common commands listed below.
 Alternatively, run `make` to list all available commands
 
 ```bash
+# Go Application
 make build        # Build the application
 make run          # Run the application
 make dev          # Run the application with live reload (docker-compose)
@@ -112,9 +113,6 @@ To use live reload, simply run:
 ```bash
 # Using the make command (recommended)
 make dev
-
-# Or directly with docker-compose
-docker-compose up dev
 ```
 
 The configuration for Air is in the `.air.toml` file in the project root. No need to install Air locally as it runs in a Docker container.

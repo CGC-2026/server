@@ -4,51 +4,9 @@
 
 package db
 
-import (
-	"github.com/jackc/pgx/v5/pgtype"
-)
-
-type ExerciseSessionJointSample struct {
-	ID                string        `json:"id"`
-	ExerciseSessionID string        `json:"exercise_session_id"`
-	PitchAngle        pgtype.Float4 `json:"pitch_angle"`
-	YawAngle          pgtype.Float4 `json:"yaw_angle"`
-	RollAngle         pgtype.Float4 `json:"roll_angle"`
-	TimestampMs       pgtype.Int4   `json:"timestamp_ms"`
-	AxMps2            pgtype.Float4 `json:"ax_mps2"`
-	AyMps2            pgtype.Float4 `json:"ay_mps2"`
-	AzMps2            pgtype.Float4 `json:"az_mps2"`
-	GxDps             pgtype.Float4 `json:"gx_dps"`
-	GyDps             pgtype.Float4 `json:"gy_dps"`
-	GzDps             pgtype.Float4 `json:"gz_dps"`
-}
-
-type ExerciseSessionRepetition struct {
-	ID                string        `json:"id"`
-	ExerciseSessionID string        `json:"exercise_session_id"`
-	RepIndex          pgtype.Int4   `json:"rep_index"`
-	AvgRangeOfMotion  pgtype.Float4 `json:"avg_range_of_motion"`
-	PeakRangeOfMotion pgtype.Float4 `json:"peak_range_of_motion"`
-	AvgAngleVelocity  pgtype.Float4 `json:"avg_angle_velocity"`
-	PeakAngleVelocity pgtype.Float4 `json:"peak_angle_velocity"`
-}
-
-type ExerciseType struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
 type User struct {
 	ID        string `json:"id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
-}
-
-type UserExerciseSession struct {
-	ID             string             `json:"id"`
-	UserID         string             `json:"user_id"`
-	ExerciseTypeID string             `json:"exercise_type_id"`
-	StartTimeUtc   pgtype.Timestamptz `json:"start_time_utc"`
-	EndTimeUtc     pgtype.Timestamptz `json:"end_time_utc"`
 }
