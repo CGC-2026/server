@@ -55,7 +55,10 @@ migrations-status:
 	docker compose exec dev goose status
 
 migrations-create:
-	docker compose exec dev goose -s create $(name) sql
+	if [ -z "$$name" ]; then \
+		name="migration"; \
+	fi; \
+	docker compose exec dev goose -s create $$name sql
 
 migrations-up:
 	@echo Running goose migrations up
