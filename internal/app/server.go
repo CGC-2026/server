@@ -6,13 +6,16 @@ import (
 	"time"
 
 	"server/internal/app/router"
+	"server/internal/data"
 	"server/internal/http/middleware"
 	"server/internal/log"
 )
 
 // Server represents the HTTP server
 type Server struct {
+	cfg ServerConfig
 	server *http.Server
+	store *data.Store
 	logger log.Logger
 }
 
@@ -38,8 +41,16 @@ func DefaultServerConfig() ServerConfig {
 func NewServer(config ServerConfig) *Server {
 	logger := log.NewStandardLogger()
 
+
+	// Initialize db store
+	store, err := data.NewStore(context.Background())
+	if err != nil {
+		logger.Error("failed to init data store: %v", err)
+		panic(err)
+	}
+
 	// Create router and register routes
-	r := router.New(logger)
+	r := router.New(logger, store)
 	r.RegisterRoutes()
 
 	// Apply middleware to router
@@ -55,7 +66,9 @@ func NewServer(config ServerConfig) *Server {
 	}
 
 	return &Server{
+		cfg: config,
 		server: srv,
+		store: store,
 		logger: logger,
 	}
 }
@@ -69,5 +82,10 @@ func (s *Server) Start() error {
 // Shutdown gracefully shuts down the server
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down server")
-	return s.server.Shutdown(ctx)
+	_ = s.server.Shutdown(ctx)
+
+	if s.store != nil {
+		s.store.Close()
+	}
+	return nil
 }
