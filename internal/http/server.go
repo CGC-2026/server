@@ -7,6 +7,7 @@ import (
 
 	"server/internal/data"
 	"server/internal/http/middleware"
+	"server/internal/http/tunnel"
 	"server/internal/log"
 )
 
@@ -16,6 +17,7 @@ type Server struct {
 	server *http.Server
 	store  *data.Store
 	logger log.Logger
+	tunnel *tunnel.NgrokTunnel
 }
 
 // ServerConfig contains configuration for the server
@@ -70,24 +72,30 @@ func NewServer(config ServerConfig) *Server {
 		MaxHeaderBytes: config.MaxHeaderBytes,
 	}
 
+	ngrokTunnel := tunnel.New(logger)
+
 	return &Server{
 		cfg:    config,
 		server: srv,
 		store:  store,
 		logger: logger,
+		tunnel: ngrokTunnel,
 	}
 }
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
 	s.logger.Info("Starting server at http://localhost%s", s.server.Addr)
+	s.tunnel.Start(s.server.Handler)
 	return s.server.ListenAndServe()
 }
 
-// Shutdown gracefully shuts down the server
+// Shutdown gracefully shuts down the server and ngrok tunnel
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down server")
 	_ = s.server.Shutdown(ctx)
+
+	s.tunnel.Shutdown(ctx) // Close ngrok tunnel if active
 
 	if s.store != nil {
 		s.store.Close()
