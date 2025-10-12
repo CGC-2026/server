@@ -4,9 +4,17 @@
 
 package db
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 type User struct {
-	ID        string `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
+	ID        string             `json:"id"`
+	ClerkID   string             `json:"clerk_id"`
+	FirstName string             `json:"first_name"`
+	LastName  string             `json:"last_name"`
+	Email     string             `json:"email"`
+	ImageUrl  pgtype.Text        `json:"image_url"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }

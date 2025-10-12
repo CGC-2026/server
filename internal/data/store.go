@@ -1,4 +1,3 @@
-// internal/data/store.go
 package data
 
 import (
@@ -18,7 +17,9 @@ type Store struct {
 
 func NewStore(ctx context.Context) (*Store, error) {
 	cfg, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	cfg.MaxConns = 10
 	cfg.MinConns = 1
@@ -26,7 +27,9 @@ func NewStore(ctx context.Context) (*Store, error) {
 	cfg.MaxConnIdleTime = 5 * time.Minute
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	return &Store{Pool: pool, Queries: sqlc.New(pool)}, nil
 }

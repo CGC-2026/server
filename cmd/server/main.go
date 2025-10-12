@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"server/internal/app"
+	app "server/internal"
 	"server/internal/log"
 )
 

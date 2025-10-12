@@ -1,11 +1,10 @@
-package app
+package http
 
 import (
 	"context"
 	"net/http"
 	"time"
 
-	"server/internal/app/router"
 	"server/internal/data"
 	"server/internal/http/middleware"
 	"server/internal/log"
@@ -13,9 +12,9 @@ import (
 
 // Server represents the HTTP server
 type Server struct {
-	cfg ServerConfig
+	cfg    ServerConfig
 	server *http.Server
-	store *data.Store
+	store  *data.Store
 	logger log.Logger
 }
 
@@ -30,7 +29,7 @@ type ServerConfig struct {
 // DefaultServerConfig returns the default server configuration
 func DefaultServerConfig() ServerConfig {
 	return ServerConfig{
-		Port:           "8080",
+		Port:           "3000",
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20, // 1 MB
@@ -41,6 +40,12 @@ func DefaultServerConfig() ServerConfig {
 func NewServer(config ServerConfig) *Server {
 	logger := log.NewStandardLogger()
 
+	// Initialize Clerk
+	if err := middleware.InitClerk(); err != nil {
+		logger.Info("Clerk not initialized %v", err)
+	} else {
+		logger.Info("Clerk initialized successfully")
+	}
 
 	// Initialize db store
 	store, err := data.NewStore(context.Background())
@@ -50,7 +55,7 @@ func NewServer(config ServerConfig) *Server {
 	}
 
 	// Create router and register routes
-	r := router.New(logger, store)
+	r := New(logger, store)
 	r.RegisterRoutes()
 
 	// Apply middleware to router
@@ -66,9 +71,9 @@ func NewServer(config ServerConfig) *Server {
 	}
 
 	return &Server{
-		cfg: config,
+		cfg:    config,
 		server: srv,
-		store: store,
+		store:  store,
 		logger: logger,
 	}
 }
