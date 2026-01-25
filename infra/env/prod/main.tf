@@ -77,3 +77,19 @@ module "ecr" {
 
 output "ecr_repository_url" { value = module.ecr.repository_url }
 output "ecr_repository_name" { value = module.ecr.repository_name }
+
+module "github_oidc" {
+  source = "../../modules/github_oidc"
+
+  name_prefix = local.name_prefix
+  tags        = local.tags
+
+  github_repo   = "CGC-2026/server"
+  github_branch = "main"
+
+  aws_region          = var.aws_region
+  ecr_repository_name = module.ecr.repository_name
+  ec2_instance_id     = module.compute.instance_id
+}
+
+output "github_deploy_role_arn" { value = module.github_oidc.deploy_role_arn }
