@@ -3,15 +3,15 @@ variable "name_prefix" {
 }
 
 variable "tags" {
-    type = map(string)
-    default = {}
+  type    = map(string)
+  default = {}
 }
 
 variable "public_subnet_id" { type = string }
 variable "ec2_sg_id" { type = string }
 
 variable "app_port" {
-  type = number
+  type    = number
   default = 8080
 }
 
@@ -22,11 +22,11 @@ variable "ssm_username_param" { type = string }
 variable "ssm_password_param" { type = string }
 
 variable "ecr_image" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "instance_type" {
-  type = string
+  type    = string
   default = "t3.micro"
 }

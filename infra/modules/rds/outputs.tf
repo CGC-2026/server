@@ -3,7 +3,7 @@ output "db_endpoint" {
 }
 
 output "db_port" {
-    value = aws_db_instance.this.port
+  value = aws_db_instance.this.port
 }
 
 output "ssm_password_param" {
@@ -11,9 +11,13 @@ output "ssm_password_param" {
 }
 
 output "ssm_username_param" {
-    value = aws_ssm_parameter.db_username.name
+  value = aws_ssm_parameter.db_username.name
 }
 
 output "ssm_dbname_param" {
-    value = aws_ssm_parameter.db_name.name
+  value = aws_ssm_parameter.db_name.name
+}
+
+output "ssm_database_url_param" {
+  value = aws_ssm_parameter.database_url.name
 }

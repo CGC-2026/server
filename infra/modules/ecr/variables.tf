@@ -3,11 +3,11 @@ variable "name_prefix" {
 }
 
 variable "tags" {
-    type = map(string)
-    default = {}
+  type    = map(string)
+  default = {}
 }
 
 variable "keep_last_images" {
-  type = number
+  type    = number
   default = 20
 }
