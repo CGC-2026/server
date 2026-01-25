@@ -3,3 +3,8 @@ bin/
 tmp/
 
 .env
+
+# OpenTofu Terraform
+.terraform
+*.tfstate
+*.tfstate.*
