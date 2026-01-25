@@ -19,18 +19,18 @@ output "vpc_id" {
   value = module.network.vpc_id
 }
 
-output "public_subnet_id" {
-  value = module.network.public_subnet_id
-}
-
-output "private_subnet_id" {
-  value = module.network.private_subnet_id
-}
-
 output "ec2_sg_id" {
   value = module.network.ec2_sg_id
 }
 
 output "rds_sg_id" {
   value = module.network.rds_sg_id
+}
+
+output "private_subnet_ids" {
+  value = module.network.private_subnet_ids
+}
+
+output "public_subnet_ids" {
+  value = module.network.public_subnet_ids
 }

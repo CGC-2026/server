@@ -3,7 +3,9 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-    az = data.aws_availability_zones.available.names[0]
+    az_a = data.aws_availability_zones.available.names[0]
+    az_b = data.aws_availability_zones.available.names[1]
+
     default_tags = merge(var.tags, {
         Name = var.name_prefix
     })
@@ -32,10 +34,22 @@ resource "aws_internet_gateway" "this" {
 resource "aws_subnet" "private" {
   vpc_id = aws_vpc.this.id
   cidr_block = var.private_subnet_cidr
-  availability_zone = local.az
+  availability_zone = local.az_a
 
     tags = merge(var.tags, {
     Name = "${var.name_prefix}-private-subnet"
+    Tier = "private"
+  })
+}
+
+# Second private subnet for RDS required by aws
+resource "aws_subnet" "private_b" {
+  vpc_id = aws_vpc.this.id
+  cidr_block = var.private_subnet_cidr_b
+  availability_zone = local.az_b
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-private-subnet-b"
     Tier = "private"
   })
 }
@@ -44,11 +58,24 @@ resource "aws_subnet" "private" {
 resource "aws_subnet" "public" {
   vpc_id = aws_vpc.this.id
   cidr_block = var.public_subnet_cidr
-  availability_zone = local.az
+  availability_zone = local.az_a
   map_public_ip_on_launch = true
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-public-subnet"
+    Tier = "public"
+  })
+}
+
+# Second public subnet for RDS
+resource "aws_subnet" "public_b" {
+  vpc_id = aws_vpc.this.id
+  cidr_block = var.public_subnet_cidr_b
+  availability_zone = local.az_b
+  map_public_ip_on_launch = true
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-public-subnet-b"
     Tier = "public"
   })
 }
@@ -71,6 +98,11 @@ resource "aws_route" "public_default" {
 resource "aws_route_table_association" "public_assoc" {
     subnet_id = aws_subnet.public.id
     route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_assoc_b" {
+  subnet_id = aws_subnet.public_b.id
+  route_table_id = aws_route_table.public.id
 }
 
 # Security group for EC2
