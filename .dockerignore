@@ -1,0 +1,8 @@
+.git
+**/.git
+infra/
+**/node_modules
+**/dist
+**/bin
+**/tmp
+.env
