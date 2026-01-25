@@ -31,8 +31,8 @@ output "public_subnet_ids" { value = module.network.public_subnet_ids }
 module "rds" {
   source = "../../modules/rds"
 
-  name_prefix        = local.name_prefix
-  tags               = local.tags
+  name_prefix = local.name_prefix
+  tags        = local.tags
 
   # DB lives in private subnets, accessed only by the app server (EC2)
   private_subnet_ids = module.network.private_subnet_ids
@@ -47,3 +47,23 @@ output "db_port" { value = module.rds.db_port }
 output "ssm_password_param" { value = module.rds.ssm_password_param }
 output "ssm_username_param" { value = module.rds.ssm_username_param }
 output "ssm_dbname_param" { value = module.rds.ssm_dbname_param }
+
+# EC2 runtime host for backend API
+module "compute" {
+  source = "../../modules/compute"
+
+  name_prefix = local.name_prefix
+  tags        = local.tags
+
+  public_subnet_id = module.network.public_subnet_ids[0]
+  ec2_sg_id        = module.network.ec2_sg_id
+
+  ssm_dbname_param   = module.rds.ssm_dbname_param
+  ssm_username_param = module.rds.ssm_username_param
+  ssm_password_param = module.rds.ssm_password_param
+
+  app_port = 8080
+}
+
+output "ec2_instance_id" { value = module.compute.instance_id }
+output "ec2_public_ip" { value = module.compute.public_ip }
