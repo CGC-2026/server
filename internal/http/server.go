@@ -28,7 +28,8 @@ type ServerConfig struct {
 	MaxHeaderBytes int
 }
 
-// DefaultServerConfig returns the default server configuration
+// DefaultServerConfig provides a ServerConfig populated with sensible defaults for the HTTP server.
+// The defaults are: Port "8080", ReadTimeout 10s, WriteTimeout 10s, and MaxHeaderBytes 1<<20 (1 MB).
 func DefaultServerConfig() ServerConfig {
 	return ServerConfig{
 		Port:           "8080",
