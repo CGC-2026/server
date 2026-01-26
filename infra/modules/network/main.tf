@@ -67,7 +67,7 @@ resource "aws_subnet" "public" {
   })
 }
 
-# Second public subnet for RDS
+# Second public subnet for fault tolerance and availability
 resource "aws_subnet" "public_b" {
   vpc_id                  = aws_vpc.this.id
   cidr_block              = var.public_subnet_cidr_b
