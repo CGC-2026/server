@@ -35,10 +35,10 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          ECR_REGISTRY="$aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION}.amazonaws.com"
-          IMAGE_URI="${ECR_REGISTERY}/${ECR_REPO}:${IMAGE_TAG}"
+          ECR_REGISTRY="$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION}.amazonaws.com"
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
 
-          docker build -f Dockerfile.prod -t "${IMAGE_URI}"
+          docker build -f Dockerfile.prod -t "${IMAGE_URI}" .
           docker push "${IMAGE_URI}"
 
           echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
@@ -51,9 +51,9 @@ jobs:
             --comment "Deploy ${IMAGE_URI}" \
             --parameters commands='[
               "set -e",
-              "AWS_REGION='${AWS_REGION}'"
-              "IMAGE_URI='${IMAGE_URI}'"
-              "CONTAINER_NAME='${CONTAINER_NAME}'"
+              "AWS_REGION='${AWS_REGION}'",
+              "IMAGE_URI='${IMAGE_URI}'",
+              "CONTAINER_NAME='${CONTAINER_NAME}'",
               "",
               "if ! command -v docker >/dev/null 2>&1; then sudo dnf -y install docker; sudo systemctl enable --now docker; fi",
               "",
@@ -63,14 +63,14 @@ jobs:
               "aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin $(echo ${IMAGE_URI} | cut -d/ -f1)",
               "",
               "# Fetch runtime secrets from SSM",
-              "DBURL=$(aws ssm get-parameter --with-decryption --name /cgc-2026-prod/api/database_url --query Parameter.Value --output text)"
+              "DBURL=$(aws ssm get-parameter --with-decryption --name /cgc-2026-prod/api/database_url --query Parameter.Value --output text)",
               "CLERK_SECRET=$(aws ssm get-parameter --with-decryption --name /cgc-2026-prod/api/clerk_secret_key --query Parameter.Value --output text)",
               "",
               "# Pull new image",
               "",
               "sudo docker pull ${IMAGE_URI}",
               "# Stop existing container (if any)",
-              "sudo docker rm -f ${CONTAINER_NAME} || true"
+              "sudo docker rm -f ${CONTAINER_NAME} || true",
               "",
               "# Run container",
               "sudo docker run -d --restart unless-stopped --name ${CONTAINER_NAME} -p 8080:8080 -e PORT=8080 -e DATABASE_URL=${DBURL} -e CLERK_SECRET_KEY=${CLERK_SECRET} ${IMAGE_URI}",

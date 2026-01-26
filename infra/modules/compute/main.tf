@@ -78,14 +78,14 @@ locals {
     dnf update -y
     dnf install -y docker
     systemctl enable docker
-    systemct1 start docker
+    systemctl start docker
     usermod -aG docker ec2-user
 
-    echo "DB_NAME_PARAm=${var.ssm_dbname_param}" >> /etc/environment
+    echo "DB_NAME_PARAM=${var.ssm_dbname_param}" >> /etc/environment
     echo "DB_USER_PARAM=${var.ssm_username_param}" >> /etc/environment
-    echo "DB_USER_PARAM=${var.ssm_password_param}" >> /etc/environment
+    echo "DB_PASS_PARAM=${var.ssm_password_param}" >> /etc/environment
 
-    echo "EC2 bootstrap complete > /var/log/app-bootstrap.txt
+    echo "EC2 bootstrap complete" > /var/log/app-bootstrap.txt
   EOF
 }
 

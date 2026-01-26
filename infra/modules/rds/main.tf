@@ -13,7 +13,7 @@ resource "aws_db_subnet_group" "this" {
 # Generate random password
 resource "random_password" "db" {
   length  = 24
-  special = true
+  special = false
 }
 
 # Store credentials in SSM parameter store
@@ -26,7 +26,7 @@ resource "aws_ssm_parameter" "db_password" {
 resource "aws_ssm_parameter" "db_username" {
   name  = "/${var.name_prefix}/db/username"
   type  = "String"
-  value = var.db_name
+  value = var.db_username
 }
 
 resource "aws_ssm_parameter" "db_name" {
@@ -66,8 +66,9 @@ resource "aws_db_instance" "this" {
   publicly_accessible = false
 
   backup_retention_period = 7
-  skip_final_snapshot     = true
-  deletion_protection     = false
+  skip_final_snapshot     = false
+  final_snapshot_identifier = "${var.name_prefix}-final-snapshot"
+  deletion_protection     = true
 
   apply_immediately = true
 

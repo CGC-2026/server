@@ -88,7 +88,10 @@ data "aws_iam_policy_document" "deploy" {
       "ssm:GetCommandInvocation",
       "ssm:ListCommandInvocations"
     ]
-    resources = ["*"]
+    resources = [
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/${var.ec2_instance_id}",
+      "arn:aws:ssm:${var.aws_region}::document/AWS-RunShellScript"
+    ]
   }
 
   statement {
