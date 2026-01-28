@@ -5,10 +5,10 @@ on:
     branches: [ "main" ]
 
 env:
-  AWS_REGION: ca-central-1
-  ECR_REPO: cgc-2026-prod-backend
-  EC2_INSTANCE_ID: i-089d80dced7d4c63f
-  CONTAINER_NAME: cgc-2026-api
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPO: ${{ secrets.ECR_REPO }}
+  EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+  CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
 
 jobs:
   build-push-deploy:
@@ -48,7 +48,6 @@ jobs:
           aws ssm send-command \
             --instance-ids "${EC2_INSTANCE_ID}" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploy ${IMAGE_URI}" \
             --parameters commands='[
               "set -e",
               "AWS_REGION='${AWS_REGION}'",
