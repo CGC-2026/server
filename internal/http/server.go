@@ -31,7 +31,7 @@ type ServerConfig struct {
 // DefaultServerConfig returns the default server configuration
 func DefaultServerConfig() ServerConfig {
 	return ServerConfig{
-		Port:           "3000",
+		Port:           "8080",
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20, // 1 MB

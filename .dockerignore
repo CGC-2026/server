@@ -1,0 +1,7 @@
+.git
+**/.git
+infra/
+**/dist
+**/bin
+**/tmp
+.env
