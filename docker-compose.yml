@@ -1,24 +1,43 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
     container_name: postgres_db
     env_file: .env
-    ports:
-      - "${POSTGRES_PORT}:5432"
+    ports: ["${POSTGRES_PORT:-5432}:5432"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   dev:
-    image: cosmtrek/air
-    container_name: go_air_dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: go_dev
     working_dir: /app
-    ports:
-      - "8080:8080"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+    ports: ["3000:3000"]
     volumes:
       - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
     command: air
+
+  # Optional DB web UI
+  pgweb:
+    image: sosedoff/pgweb
+    ports: ["3001:8081"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
