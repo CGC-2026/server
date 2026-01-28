@@ -68,7 +68,7 @@ resource "aws_db_instance" "this" {
   backup_retention_period = 7
   skip_final_snapshot     = false
   final_snapshot_identifier = "${var.name_prefix}-final-snapshot"
-  deletion_protection     = true
+  deletion_protection     = false
 
   apply_immediately = true
 
