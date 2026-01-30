@@ -45,7 +45,10 @@ jobs:
           docker build -f Dockerfile.prod -t "${IMAGE_URI}" .
           docker push "${IMAGE_URI}"
 
-          echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_OUTPUT
+          echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
+
+      - name: Print build output
+        run: echo "build produced image_uri='${{ steps.build.outputs.image_uri }}'"
 
   deploy:
     runs-on: ubuntu-latest
@@ -102,7 +105,7 @@ jobs:
               "# Smoke check",
               "sleep 2",
               "curl -fsS http://localhost:8080/health"
-            ]"" \
+            ]" \
             --query 'Command.CommandId' \
             --output text)
 
