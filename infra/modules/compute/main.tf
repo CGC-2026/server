@@ -49,6 +49,18 @@ data "aws_iam_policy_document" "ssm_read" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    actions = [
+      "kms:Decrypt"
+    ]
+    resources = ["*"]
+    condition {
+      test = "StringEquals"
+      variable = "kms:ViaService"
+      values = ["ssm.${var.aws_region}.amazonaws.com"]
+    }
+  }
 }
 
 resource "aws_iam_policy" "ssm_read" {
@@ -73,6 +85,11 @@ locals {
   user_data = <<-EOF
     #!/bin/bash
     set -euo pipefail
+
+    # Install ssm agent
+    dnf install -y amazon-ssm-agent
+    systemctl enable amazon-ssm-agent
+    systemctl start amazon-ssm-agent
 
     # Install docker + aws cli tools
     dnf update -y
