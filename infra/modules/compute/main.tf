@@ -6,7 +6,12 @@ data "aws_ami" "al2023" {
 
   filter {
     name   = "name"
-    values = ["al2023-ami-*-x86_64"]
+    values = ["al2023-ami-2023.*-kernel-6.1-x86_64"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
   }
 }
 
@@ -50,17 +55,6 @@ data "aws_iam_policy_document" "ssm_read" {
     resources = ["*"]
   }
 
-  statement {
-    actions = [
-      "kms:Decrypt"
-    ]
-    resources = ["*"]
-    condition {
-      test = "StringEquals"
-      variable = "kms:ViaService"
-      values = ["ssm.${var.aws_region}.amazonaws.com"]
-    }
-  }
 }
 
 resource "aws_iam_policy" "ssm_read" {
