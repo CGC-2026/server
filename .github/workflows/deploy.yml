@@ -71,6 +71,9 @@ jobs:
           COMMANDS=$(cat <<JSON
           [
             "set -euo pipefail",
+            "AWS_REGION=${AWS_REGION}",
+            "IMAGE_URI=${IMAGE_URI}",
+            "CONTAINER_NAME=${CONTAINER_NAME}
             "echo IMAGE_URI=$IMAGE_URI",
             "if ! command -v docker >/dev/null 2>&1; then sudo dnf -y install docker; sudo systemctl enable --now docker; fi",
             "sudo usermod -aG docker ec2-user || true",
