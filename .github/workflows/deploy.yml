@@ -35,6 +35,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build & push image
+        id: build
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
@@ -74,7 +75,7 @@ jobs:
             --region "${AWS_REGION}" \
             --instance-ids "${EC2_INSTANCE_ID}" \
             --document-name "AWS-RunShellScript" \
-            --parameters commands='[
+            --parameters commands="[
               "set -e",
               "AWS_REGION='${AWS_REGION}'",
               "IMAGE_URI='${IMAGE_URI}'",
@@ -103,7 +104,7 @@ jobs:
               "# Smoke check",
               "sleep 2",
               "curl -fsS http://localhost:8080/health"
-            ]' \
+            ]"" \
             --query 'Command.CommandId' \
             --output text)
 
