@@ -44,7 +44,7 @@ jobs:
           docker build -f Dockerfile.prod -t "${IMAGE_URI}" .
           docker push "${IMAGE_URI}"
 
-          echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
+          echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_OUTPUT
 
   deploy:
     runs-on: ubuntu-latest
@@ -65,6 +65,11 @@ jobs:
         env:
           IMAGE_URI: ${{ needs.build.outputs.image_uri }}
         run: |
+          set -euo pipefail
+
+          echo "Deploying image ${IMAGE_URI} to instance"
+          test -n "${IMAGE_URI}"
+
           COMMAND_ID=$(aws ssm send-command \
             --region "${AWS_REGION}" \
             --instance-ids "${EC2_INSTANCE_ID}" \
