@@ -19,7 +19,7 @@ jobs:
       contents: read
 
     outputs:
-      image_uri: ${{ steps.build-and-push.outputs.image_uri }}
+      image_uri: ${{ steps.build.outputs.image_uri }}
 
     steps:
       - name: Checkout
