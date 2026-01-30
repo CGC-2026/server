@@ -66,8 +66,6 @@ jobs:
         env:
           IMAGE_URI: ${{ needs.build.outputs.image_uri }}
         run: |
-          set -euo pipefail
-
           echo "Deploying image ${IMAGE_URI} to instance"
           test -n "${IMAGE_URI}"
 
