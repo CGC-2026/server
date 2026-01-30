@@ -19,7 +19,7 @@ jobs:
       contents: read
 
     outputs:
-      image_uri: ${{ steps.build.outputs.image_uri }}
+      IMAGE_URI: ${{ steps.build.outputs.IMAGE_URI }}
 
     steps:
       - name: Checkout
@@ -64,7 +64,7 @@ jobs:
 
       - name: Deploy to EC2 via SSM
         env:
-          IMAGE_URI: ${{ needs.build.outputs.image_uri }}
+          IMAGE_URI: ${{ needs.build.outputs.IMAGE_URI }}
         run: |
           echo "Deploying image ${IMAGE_URI} to instance"
           test -n "${IMAGE_URI}"
