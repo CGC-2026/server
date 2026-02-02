@@ -87,8 +87,10 @@ migrations-down-to:
 
 ## Seed the database with test data
 db-seed:
-	@echo "Seeding database..."
-	docker compose exec dev sh -c "psql -d $$DATABASE_URL -f db/seeds/seed.sql"
+	@echo "Seeding base types"
+	docker compose exec dev sh -c 'psql $$DATABASE_URL -f db/seeds/seed.sql'
+	@echo "Seeding development data..."
+	docker compose exec dev sh -c 'psql -d "$$DATABASE_URL" -f db/seeds/seed.dev.sql'
 
 ## Generate sqlc code
 sqlc-gen: 
