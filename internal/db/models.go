@@ -10,11 +10,64 @@ import (
 
 type User struct {
 	ID        string             `json:"id"`
-	ClerkID   string             `json:"clerk_id"`
 	FirstName string             `json:"first_name"`
 	LastName  string             `json:"last_name"`
 	Email     string             `json:"email"`
 	ImageUrl  pgtype.Text        `json:"image_url"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type UserCalibration struct {
+	ID            string             `json:"id"`
+	UserID        string             `json:"user_id"`
+	StandingAngle float64            `json:"standing_angle"`
+	StandingFlex  float64            `json:"standing_flex"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WorkoutRep struct {
+	ID               string             `json:"id"`
+	WorkoutSetID     string             `json:"workout_set_id"`
+	RepNumber        int32              `json:"rep_number"`
+	StartTime        pgtype.Timestamptz `json:"start_time"`
+	EndTime          pgtype.Timestamptz `json:"end_time"`
+	Quality          pgtype.Text        `json:"quality"`
+	PeakAngle        pgtype.Float8      `json:"peak_angle"`
+	AvgFlex          pgtype.Float8      `json:"avg_flex"`
+	SensorDataPoints []byte             `json:"sensor_data_points"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WorkoutSession struct {
+	ID            string             `json:"id"`
+	UserID        string             `json:"user_id"`
+	WorkoutTypeID string             `json:"workout_type_id"`
+	StartTime     pgtype.Timestamptz `json:"start_time"`
+	EndTime       pgtype.Timestamptz `json:"end_time"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WorkoutSet struct {
+	ID               string             `json:"id"`
+	WorkoutSessionID string             `json:"workout_session_id"`
+	SetNumber        int32              `json:"set_number"`
+	StartTime        pgtype.Timestamptz `json:"start_time"`
+	EndTime          pgtype.Timestamptz `json:"end_time"`
+	CoachingScore    []byte             `json:"coaching_score"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WorkoutType struct {
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	Config      []byte             `json:"config"`
+	ImageUrl    pgtype.Text        `json:"image_url"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
