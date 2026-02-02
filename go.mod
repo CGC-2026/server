@@ -6,6 +6,7 @@ require (
 	github.com/clerk/clerk-sdk-go/v2 v2.4.2
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/svix/svix-webhooks v1.77.0
+	golang.ngrok.com/ngrok/v2 v2.1.0
 )
 
 require (
@@ -17,7 +18,6 @@ require (
 	github.com/jpillora/backoff v1.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.ngrok.com/muxado/v2 v2.0.1 // indirect
-	golang.ngrok.com/ngrok/v2 v2.1.0 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
