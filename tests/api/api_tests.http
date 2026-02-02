@@ -1,0 +1,73 @@
+### Variables
+@baseUrl = https://unflayed-gilbert-voraciously.ngrok-free.dev/api
+
+@devUserId = user_396cTR8sDnxPxTk8VS4tMfCgd8k
+@userId = user_396cTR8sDnxPxTk8VS4tMfCgd8k
+@workoutTypeId = workout-squat-001
+@devSecret = SuperDuperSecretSecret58
+
+### 1. Get Workout Types (Matches WorkoutType[])
+GET {{baseUrl}}/workouts/types
+X-Dev-User-Id: {{devUserId}}
+X-Dev-Secret: {{devSecret}}
+Authorization: Bearer 123
+
+### 2. Create Session (Matches CreateSessionDTO)
+# @name createSession
+POST {{baseUrl}}/workouts/sessions
+X-Dev-User-Id: {{devUserId}}
+X-Dev-Secret: {{devSecret}}
+Content-Type: application/json
+
+{
+    "userId": "{{userId}}",
+    "workoutTypeId": "{{workoutTypeId}}",
+    "startTime": "2026-02-02T10:00:00Z"
+}
+
+### 3. Save a Full Set (Matches SaveSetDTO)
+@sessionId = {{createSession.response.body.id}}
+POST {{baseUrl}}/workouts/sessions/{{sessionId}}
+X-Dev-User-Id: {{devUserId}}
+X-Dev-Secret: {{devSecret}}
+Content-Type: application/json
+
+{
+    "sessionId": "{{sessionId}}",
+    "setNumber": 1,
+    "startTime": "2026-02-02T10:05:00Z",
+    "endTime": "2026-02-02T10:07:00Z",
+    "reps": [
+        {
+            "repNumber": 1,
+            "startTime": "2026-02-02T10:05:10Z",
+            "endTime": "2026-02-02T10:05:12Z",
+            "peakAngle": 85.5,
+            "avgFlex": 120.2,
+            "quality": "good",
+            "sensorDataPoints": [{"t": 1, "a": 45}, {"t": 2, "a": 85}]
+        }
+    ]
+}
+
+### 4. Upsert Calibration (Matches CalibrationDataDto)
+POST {{baseUrl}}/users/{{userId}}/calibration
+X-Dev-User-Id: {{devUserId}}
+X-Dev-Secret: {{devSecret}}
+Content-Type: application/json
+
+{
+    "standingAngle": 0.5,
+    "standingFlex": 10.5,
+    "lastUpdated": "2026-02-02T12:00:00Z"
+}
+
+### 5. Get Calibration (Matches CalibrationDataDto)
+GET {{baseUrl}}/users/{{userId}}/calibration
+X-Dev-User-Id: {{devUserId}}
+X-Dev-Secret: {{devSecret}}
+
+### 6. Delete Calibration (No return value)
+DELETE {{baseUrl}}/users/{{userId}}/calibration
+X-Dev-User-Id: {{devUserId}}
+X-Dev-Secret: {{devSecret}}
