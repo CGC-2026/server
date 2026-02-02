@@ -1,5 +1,37 @@
-INSERT INTO exercise_types (id, name)
-VALUES (gen_random_uuid(), 'squat');
+/**
+ * Seed data for development environment
+ * Run with: psql -d your_database_name -f db/seeds/seed.dev.sql
+ */
 
+-- Create a test user
 INSERT INTO users (id, clerk_id, first_name, last_name, email)
-VALUES (gen_random_uuid(), 'clerk_id', 'Test', 'User', 'test@example.com');
+VALUES ('test-user','user_396cTR8sDnxPxTk8VS4tMfCgd8k', 'Test', 'User', 'test@example.com')
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed data for workout_type table
+INSERT INTO workout_type (id, name, description, config)
+VALUES (
+    'workout-squat-001',
+    'Squat',
+    'Track your squat form and depth with real-time coaching',
+    '{
+        "sampleRate": 120,
+        "minRepDuration": 800,
+        "maxRepDuration": 8000,
+        "minDepthAngle": 30
+    }'::jsonb
+)
+ON CONFLICT (clerk_id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    config = EXCLUDED.config;
+
+-- Create a fake session from yesterday
+INSERT INTO workout_session (id, user_id, workout_type_id, start_time, end_time)
+VALUES (
+    'dev-session-001', 
+    'user_396cTR8sDnxPxTk8VS4tMfCgd8k', 
+    'workout-squat-001', 
+    NOW() - INTERVAL '1 day', 
+    NOW() - INTERVAL '23 hours'
+) ON CONFLICT DO NOTHING;
