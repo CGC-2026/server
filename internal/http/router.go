@@ -53,5 +53,10 @@ func (r *Router) RegisterRoutes() {
 	handlers.RegisterUsersRoutes(usersMux, r.logger, r.store)
 	r.mux.Handle("/api/users/", http.StripPrefix("/api/users", middleware.AuthMiddleware(r.logger)(usersMux)))
 
+	// Workouts API
+	workoutMux := http.NewServeMux()
+	handlers.RegisterWorkoutRoutes(workoutMux, r.logger, r.store)
+	r.mux.Handle("/api/workouts/", http.StripPrefix("/api/workouts", middleware.AuthMiddleware(r.logger)(workoutMux)))
+
 	r.logger.Info("Routes registered successfully")
 }

@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
+	"server/internal/core/service"
 	"server/internal/data"
 	"server/internal/http/middleware"
 	"server/internal/http/responses"
@@ -23,6 +25,8 @@ type (
 )
 
 func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Store) {
+
+	// List all users (protected)
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		users, err := store.Queries.ListUsers(r.Context())
 		if err != nil {
@@ -107,5 +111,50 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 		}
 
 		responses.JSONResponse(w, http.StatusOK, dto, logger)
+	})
+
+	// Get /api/users/{id}/calibration - Get user calibration data (protected)
+	mux.HandleFunc("GET /{id}/calibration", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		cal, err := service.GetUserCalibrationData(r.Context(), store, id)
+		if err != nil {
+			responses.JSONResponse(w, http.StatusNotFound, map[string]string{"error": "no calibration found"}, logger)
+			return
+		}
+		responses.JSONResponse(w, http.StatusOK, cal, logger)
+	})
+
+	// POST /api/users/{id}/calibration - Save user calibration data (protected)
+	mux.HandleFunc("POST /{id}/calibration", func(w http.ResponseWriter, r *http.Request) {
+		var dto service.CalibrationDataDto
+		if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+			responses.JSONResponse(w, 400, "invalid json", logger)
+			return
+		}
+		dto.UserId = r.PathValue("id")
+
+		if err := service.SaveUserCalibration(r.Context(), store, dto); err != nil {
+			responses.JSONResponse(w, 500, "failed to save", logger)
+			return
+		}
+		responses.JSONResponse(w, 200, map[string]string{"status": "calibration succesfully saved"}, logger)
+	})
+
+	// DELETE /api/users/{id}/calibration - Delete user calibration data (protected)
+	mux.HandleFunc("DELETE /{id}/calibration", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if id == "" {
+			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "user ID is required"}, logger)
+			return
+		}
+
+		err := service.DeleteUserCalibration(r.Context(), store, id)
+		if err != nil {
+			logger.Error("DeleteUserCalibration: %v", err)
+			responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to reset calibration"}, logger)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	})
 }
