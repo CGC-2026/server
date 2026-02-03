@@ -69,11 +69,17 @@ func GetUserCalibrationData(ctx context.Context, store *data.Store, userID strin
 		return CalibrationDataDto{}, err
 	}
 
+	var lastUpdated *time.Time
+	if cal.UpdatedAt.Valid {
+		t := cal.UpdatedAt.Time
+		lastUpdated = &t
+	}
+
 	return CalibrationDataDto{
 		UserId:        cal.UserID,
 		StandingAngle: cal.StandingAngle,
 		StandingFlex:  cal.StandingFlex,
-		LastUpdated:   &cal.UpdatedAt.Time,
+		LastUpdated:   lastUpdated,
 	}, nil
 }
 
