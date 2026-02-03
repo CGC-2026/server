@@ -16,7 +16,7 @@ jobs:
                 role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
                 aws-region: ${{ secrets.AWS_REGION }}
 
-            - name: Stop EC2 and RDS
+            - name: Start EC2 and RDS
               run: |
                 set -euo pipefail
 
