@@ -20,8 +20,8 @@ jobs:
               run: |
                 set -euo pipefail
 
-                aws ec2 stop-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }}
+                aws ec2 stop-instances --instance-ids "${{ secrets.EC2_INSTANCE_ID }}"
                 aws ec2 wait instance-stopped --instance-ids "${{ secrets.EC2_INSTANCE_ID }}"
 
-                aws rds stop-db-instance --db-instance-identifier ${{ secrets.RDS_INSTANCE_ID }}
-                aws rds wait db-instance-stopped --db-instance-identifier ${{ secrets.RDS_INSTANCE_ID }}
+                aws rds stop-db-instance --db-instance-identifier "${{ secrets.RDS_INSTANCE_ID }}"
+                aws rds wait db-instance-stopped --db-instance-identifier "${{ secrets.RDS_INSTANCE_ID }}"

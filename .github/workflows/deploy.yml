@@ -26,7 +26,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -50,8 +50,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
       - name: Run Migrations via SSM
+        env:
+          GITHUB_SHA: ${{ github.sha }}
         run: bash ./scripts/ci/migrate_via_ssm.sh
 
   deploy:
@@ -70,9 +72,11 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to EC2 via SSM
+        env:
+          GITHUB_SHA: ${{ github.sha }}
         run: bash ./scripts/ci/deploy_via_ssm.sh
 
       - name: Verify health
