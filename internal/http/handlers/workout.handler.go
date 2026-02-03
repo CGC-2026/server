@@ -30,6 +30,14 @@ func RegisterWorkoutRoutes(mux *http.ServeMux, logger log.Logger, store *data.St
 			return
 		}
 
+		// Ensure user can only create workout session for themselves
+		userId, ok := middleware.GetUserIdFromContext(r.Context())
+		if !ok {
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"}, logger)
+			return
+		}
+		dto.UserId = userId
+
 		session, err := service.CreateWorkoutSession(r.Context(), store, dto)
 		if err != nil {
 			logger.Error("Failed to create session: %v", err)
@@ -44,7 +52,7 @@ func RegisterWorkoutRoutes(mux *http.ServeMux, logger log.Logger, store *data.St
 	mux.HandleFunc("PATCH /sessions/{id}", func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := middleware.GetUserIdFromContext(r.Context())
 		if !ok {
-			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"}, logger)
 			return
 		}
 
@@ -68,7 +76,7 @@ func RegisterWorkoutRoutes(mux *http.ServeMux, logger log.Logger, store *data.St
 	mux.HandleFunc("POST /sessions/{id}", func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := middleware.GetUserIdFromContext(r.Context())
 		if !ok {
-			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"}, logger)
 			return
 		}
 
