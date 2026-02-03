@@ -1,0 +1,27 @@
+name: Stop AWS Resources
+on: workflow_dispatch
+
+jobs:
+    stop-aws-resources:
+        runs-on: ubuntu-latest
+
+        permissions:
+            id-token: write
+            contents: read
+
+        steps:
+            - name: Configure AWS credentials with OIDC
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+                aws-region: ${{ secrets.AWS_REGION }}
+
+            - name: Stop EC2 and RDS
+              run: |
+                set -euo pipefail
+
+                aws ec2 stop-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }}
+                aws ec2 wait instance-stopped --instance-ids "${{ secrets.EC2_INSTANCE_ID }}"
+
+                aws rds stop-db-instance --db-instance-identifier ${{ secrets.RDS_INSTANCE_ID }}
+                aws rds wait db-instance-stopped --db-instance-identifier ${{ secrets.RDS_INSTANCE_ID }}
