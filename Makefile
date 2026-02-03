@@ -38,9 +38,9 @@ run:
 
 # Run the application with live reload
 dev:
-	docker-compose up -d pgweb
-	docker-compose up -d db
-	docker-compose up dev; docker-compose down
+	docker compose up -d pgweb
+	docker compose up -d db
+	docker compose up dev; docker compose down
 
 # Run tests
 test:
