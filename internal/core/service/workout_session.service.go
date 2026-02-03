@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"server/internal/data"
 	"server/internal/db"
 	"time"
@@ -32,6 +33,14 @@ type WorkoutSessionDto struct {
 	EndTime       *time.Time `json:"endTime"`
 	CreatedAt     time.Time  `json:"createdAt"`
 	UpdatedAt     time.Time  `json:"updatedAt"`
+}
+
+type WorkoutTypeDto struct {
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Description *string         `json:"description"`
+	Config      json.RawMessage `json:"config"`
+	ImageURL    *string         `json:"imageUrl,omitempty"`
 }
 
 func CreateWorkoutSession(ctx context.Context, store *data.Store, dto CreateWorkoutSessionDto) (db.WorkoutSession, error) {
@@ -88,8 +97,27 @@ func UpdateWorkoutSession(ctx context.Context, store *data.Store, id string, dto
 
 }
 
-func GetWorkoutTypes(ctx context.Context, store *data.Store) ([]db.WorkoutType, error) {
-	return store.Queries.GetWorkoutTypeList(ctx)
+func GetWorkoutTypes(ctx context.Context, store *data.Store) ([]WorkoutTypeDto, error) {
+	rows, err := store.Queries.GetWorkoutTypeList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	dtos := make([]WorkoutTypeDto, len(rows))
+	for i, row := range rows {
+		dtos[i] = WorkoutTypeDto{
+			ID:       row.ID,
+			Name:     row.Name,
+			Config:   row.Config,
+			ImageURL: &row.ImageUrl.String,
+		}
+
+		if row.Description.Valid {
+			dtos[i].Description = &row.Description.String
+		}
+	}
+
+	return dtos, nil
 }
 
 func GetUserWorkoutSessionHistory(ctx context.Context, store *data.Store, userId string, limit int32) ([]db.GetUserWorkoutSessionHistoryRow, error) {

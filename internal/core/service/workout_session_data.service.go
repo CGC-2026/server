@@ -3,12 +3,22 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"server/internal/data"
 	"server/internal/db"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type CoachingScoreDto struct {
+	OverallQuality  string  `json:"overallQuality"`
+	GoodReps        int32   `json:"goodReps"`
+	OkayReps        int32   `json:"okayReps"`
+	BadReps         int32   `json:"badReps"`
+	AverageDepth    float64 `json:"averageDepth"`
+	AverageDuration float64 `json:"averageDuration"`
+}
 
 type SaveWorkoutSetDto struct {
 	WorkoutSessionID string         `json:"workoutSessionId"`
@@ -31,6 +41,42 @@ type CreateRepDto struct {
 
 func SaveWorkoutSet(ctx context.Context, store *data.Store, dto SaveWorkoutSetDto) error {
 	return store.WithTransaction(ctx, func(qtx *db.Queries) error {
+		if dto.SetNumber <= 0 {
+			return fmt.Errorf("setNumber must be greater than 0")
+		}
+		if len(dto.Reps) == 0 {
+			return fmt.Errorf("at least one rep is required")
+		}
+
+		// ensure unique, sequential reps and valid time ranges
+		seenRep := make(map[int32]struct{}, len(dto.Reps))
+		for _, r := range dto.Reps {
+			if r.RepNumber <= 0 {
+				return fmt.Errorf("repNumber must be positive")
+			}
+			if _, exists := seenRep[r.RepNumber]; exists {
+				return fmt.Errorf("duplicate repNumber %d in set", r.RepNumber)
+			}
+			seenRep[r.RepNumber] = struct{}{}
+
+			if r.StartTime != nil && r.EndTime != nil && r.EndTime.Before(*r.StartTime) {
+				return fmt.Errorf("rep %d has endTime before startTime", r.RepNumber)
+			}
+
+			if len(r.SensorData) == 0 {
+				return fmt.Errorf("rep %d has empty sensorData", r.RepNumber)
+			}
+
+			// validate sensorData JSON and enforce a soft size limit of 1MB
+			if len(r.SensorData) > 1*1024*1024 {
+				return fmt.Errorf("rep %d sensorData too large", r.RepNumber)
+			}
+			var tmp any
+			if err := json.Unmarshal(r.SensorData, &tmp); err != nil {
+				return fmt.Errorf("rep %d has invalid sensorData JSON: %w", r.RepNumber, err)
+			}
+		}
+
 		var coachingScoreBytes []byte
 		if dto.CoachingScore != nil {
 			b, err := json.Marshal(dto.CoachingScore)
@@ -89,7 +135,7 @@ func SaveWorkoutSet(ctx context.Context, store *data.Store, dto SaveWorkoutSetDt
 				Quality:          pgtype.Text{String: r.Quality, Valid: true},
 				PeakAngle:        pgtype.Float8{Float64: r.PeakAngle, Valid: true},
 				AvgFlex:          pgtype.Float8{Float64: r.AvgFlex, Valid: true},
-				SensorDataPoints: r.SensorData,
+				SensorDataPoints: []byte(r.SensorData),
 			})
 			if err != nil {
 				return err

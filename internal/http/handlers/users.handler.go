@@ -55,17 +55,25 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 	// Get current user profile (protected)
 	mux.HandleFunc("GET /me", func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := middleware.GetUserIdFromContext(r.Context())
+		userId, ok := middleware.GetUserIdFromContext(r.Context())
 		if !ok {
 			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
 		}
 
-		user, err := store.Queries.GetUserByID(r.Context(), userID)
+		user, err := store.Queries.GetUserByID(r.Context(), userId)
 		if err != nil {
 			logger.Error("GetUserByID: %v", err)
 			responses.JSONResponse(w, http.StatusNotFound, map[string]string{"error": "user not found"}, logger)
 			return
+		}
+
+		var createdAt, updatedAt string
+		if user.CreatedAt.Valid {
+			createdAt = user.CreatedAt.Time.Format(time.RFC3339)
+		}
+		if user.UpdatedAt.Valid {
+			updatedAt = user.UpdatedAt.Time.Format(time.RFC3339)
 		}
 
 		dto := userDTO{
@@ -73,8 +81,8 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
 			Email:     user.Email,
-			CreatedAt: user.CreatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
-			UpdatedAt: user.UpdatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
+			CreatedAt: createdAt,
+			UpdatedAt: updatedAt,
 		}
 		if user.ImageUrl.Valid {
 			dto.ImageURL = user.ImageUrl.String
@@ -83,15 +91,27 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 		responses.JSONResponse(w, http.StatusOK, dto, logger)
 	})
 
-	// Get user by ID (protected)
+	// Get /api/users/{id}/ Get user by ID (protected)
 	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := middleware.GetUserIdFromContext(r.Context())
+		pathId := r.PathValue("id")
+		if pathId == "" {
+			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "user ID is required"}, logger)
+			return
+		}
+
+		authUserId, ok := middleware.GetUserIdFromContext(r.Context())
 		if !ok {
 			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
 		}
 
-		user, err := store.Queries.GetUserByID(r.Context(), userID)
+		// TODO: Allow admin users to fetch other user profiles
+		if authUserId != pathId {
+			responses.JSONResponse(w, http.StatusForbidden, map[string]string{"error": "forbidden"}, logger)
+			return
+		}
+
+		user, err := store.Queries.GetUserByID(r.Context(), pathId)
 		if err != nil {
 			logger.Error("GetUserByID: %v", err)
 			responses.JSONResponse(w, http.StatusNotFound, map[string]string{"error": "user not found"}, logger)
@@ -115,12 +135,24 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 	// Get /api/users/{id}/calibration - Get user calibration data (protected)
 	mux.HandleFunc("GET /{id}/calibration", func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := middleware.GetUserIdFromContext(r.Context())
+		requestedUserId := r.PathValue("id")
+		if requestedUserId == "" {
+			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "user ID is required"}, logger)
+			return
+		}
+
+		authUserId, ok := middleware.GetUserIdFromContext(r.Context())
 		if !ok {
 			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
 		}
-		cal, err := service.GetUserCalibrationData(r.Context(), store, userID)
+
+		if authUserId != requestedUserId {
+			responses.JSONResponse(w, http.StatusForbidden, map[string]string{"error": "forbidden"}, logger)
+			return
+		}
+
+		cal, err := service.GetUserCalibrationData(r.Context(), store, requestedUserId)
 		if err != nil {
 			responses.JSONResponse(w, http.StatusNotFound, map[string]string{"error": "no calibration found"}, logger)
 			return
@@ -130,6 +162,23 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 	// POST /api/users/{id}/calibration - Save user calibration data (protected)
 	mux.HandleFunc("POST /{id}/calibration", func(w http.ResponseWriter, r *http.Request) {
+		requestedUserId := r.PathValue("id")
+		if requestedUserId == "" {
+			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "user ID is required"}, logger)
+			return
+		}
+
+		authUserId, ok := middleware.GetUserIdFromContext(r.Context())
+		if !ok {
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"}, logger)
+			return
+		}
+
+		if authUserId != requestedUserId {
+			responses.JSONResponse(w, http.StatusForbidden, map[string]string{"error": "forbidden"}, logger)
+			return
+		}
+
 		var dto service.CalibrationDataDto
 		if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 			responses.JSONResponse(w, 400, "invalid json", logger)
@@ -146,13 +195,24 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 	// DELETE /api/users/{id}/calibration - Delete user calibration data (protected)
 	mux.HandleFunc("DELETE /{id}/calibration", func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := middleware.GetUserIdFromContext(r.Context())
+		requestedUserId := r.PathValue("id")
+		if requestedUserId == "" {
+			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "user ID is required"}, logger)
+			return
+		}
+
+		authUserId, ok := middleware.GetUserIdFromContext(r.Context())
 		if !ok {
 			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
 		}
 
-		err := service.DeleteUserCalibration(r.Context(), store, userID)
+		if authUserId != requestedUserId {
+			responses.JSONResponse(w, http.StatusForbidden, map[string]string{"error": "forbidden"}, logger)
+			return
+		}
+
+		err := service.DeleteUserCalibration(r.Context(), store, requestedUserId)
 		if err != nil {
 			logger.Error("DeleteUserCalibration: %v", err)
 			responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to reset calibration"}, logger)

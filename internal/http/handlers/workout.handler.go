@@ -50,11 +50,7 @@ func RegisterWorkoutRoutes(mux *http.ServeMux, logger log.Logger, store *data.St
 
 	// PATCH /api/workouts/sessions/{id} - Update an existing workout session
 	mux.HandleFunc("PATCH /sessions/{id}", func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := middleware.GetUserIdFromContext(r.Context())
-		if !ok {
-			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"}, logger)
-			return
-		}
+		sessionId := r.PathValue("id")
 
 		var dto service.UpdateWorkoutSessionDto
 		if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
@@ -62,7 +58,7 @@ func RegisterWorkoutRoutes(mux *http.ServeMux, logger log.Logger, store *data.St
 			return
 		}
 
-		session, err := service.UpdateWorkoutSession(r.Context(), store, userID, dto)
+		session, err := service.UpdateWorkoutSession(r.Context(), store, sessionId, dto)
 		if err != nil {
 			logger.Error("Failed to update session: %v", err)
 			responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "Could not update session"}, logger)
@@ -74,18 +70,14 @@ func RegisterWorkoutRoutes(mux *http.ServeMux, logger log.Logger, store *data.St
 
 	// POST /api/workouts/sessions/{id} - Save workout session data (sets, reps, weights, etc.)
 	mux.HandleFunc("POST /sessions/{id}", func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := middleware.GetUserIdFromContext(r.Context())
-		if !ok {
-			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"}, logger)
-			return
-		}
+		sessionId := r.PathValue("id")
 
 		var dto service.SaveWorkoutSetDto
 		if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON"}, logger)
 			return
 		}
-		dto.WorkoutSessionID = userID
+		dto.WorkoutSessionID = sessionId
 
 		err := service.SaveWorkoutSet(r.Context(), store, dto)
 		if err != nil {

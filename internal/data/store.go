@@ -8,6 +8,7 @@ import (
 
 	"server/internal/db"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -39,7 +40,7 @@ func (s *Store) Close() { s.Pool.Close() }
 
 // WithTransaction handles the boilerplate of starting, committing, and rolling back a transaction.
 func (s *Store) WithTransaction(ctx context.Context, fn func(*db.Queries) error) (err error) {
-	tx, err := s.Pool.Begin(ctx)
+	tx, err := s.Pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("Failed to begin transaction: %w", err)
 	}
@@ -48,8 +49,8 @@ func (s *Store) WithTransaction(ctx context.Context, fn func(*db.Queries) error)
 	defer func() {
 		if err != nil {
 			if rbErr := tx.Rollback(ctx); rbErr != nil {
-				err = fmt.Errorf("tx rollback failed: %v (original err: %w)", rbErr, err)
-			}
+                err = fmt.Errorf("tx rollback failed: %v (original err: %w)", rbErr, err)
+            }
 		}
 	}()
 

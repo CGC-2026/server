@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"server/internal/data"
 	"server/internal/db"
@@ -66,7 +67,7 @@ func HandleCreateUserFromClerk(ctx context.Context, store *data.Store, data json
 func GetUserCalibrationData(ctx context.Context, store *data.Store, userID string) (CalibrationDataDto, error) {
 	cal, err := store.Queries.GetUserCalibrationByUserID(ctx, userID)
 	if err != nil {
-		return CalibrationDataDto{}, err
+		return CalibrationDataDto{}, errors.New("Calibration not found")
 	}
 
 	var lastUpdated *time.Time
