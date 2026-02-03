@@ -39,20 +39,18 @@ func SaveWorkoutSet(ctx context.Context, store *data.Store, dto SaveWorkoutSetDt
 			}
 			coachingScoreBytes = b
 		}
+
+		startTime := time.Now()
+		if dto.StartTime != nil && !dto.StartTime.IsZero() {
+			startTime = *dto.StartTime
+		}
+
 		set, err := qtx.CreateWorkoutSet(ctx, db.CreateWorkoutSetParams{
 			WorkoutSessionID: dto.WorkoutSessionID,
 			SetNumber:        dto.SetNumber,
-			StartTime: pgtype.Timestamptz{
-				Valid: dto.StartTime != nil,
-				Time: func() time.Time {
-					if dto.StartTime != nil {
-						return *dto.StartTime
-					}
-					return time.Time{}
-				}(),
-			},
+			StartTime:        pgtype.Timestamptz{Time: startTime, Valid: true},
 			EndTime: pgtype.Timestamptz{
-				Valid: dto.EndTime != nil,
+				Valid: dto.EndTime != nil && !dto.EndTime.IsZero(),
 				Time: func() time.Time {
 					if dto.EndTime != nil {
 						return *dto.EndTime

@@ -38,7 +38,7 @@ func NewStore(ctx context.Context) (*Store, error) {
 func (s *Store) Close() { s.Pool.Close() }
 
 // WithTransaction handles the boilerplate of starting, committing, and rolling back a transaction.
-func (s *Store) WithTransaction(ctx context.Context, fn func(*db.Queries) error) error {
+func (s *Store) WithTransaction(ctx context.Context, fn func(*db.Queries) error) (err error) {
 	tx, err := s.Pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("Failed to begin transaction: %w", err)
@@ -57,12 +57,12 @@ func (s *Store) WithTransaction(ctx context.Context, fn func(*db.Queries) error)
 	qtx := s.Queries.WithTx(tx)
 
 	// Execute the function
-	if err := fn(qtx); err != nil {
+	if err = fn(qtx); err != nil {
 		return err
 	}
 
 	// If no errror, commit the transaction
-	if err := tx.Commit(ctx); err != nil {
+	if err = tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 

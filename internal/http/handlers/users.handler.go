@@ -85,13 +85,13 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 	// Get user by ID (protected)
 	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		if id == "" {
-			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "user ID is required"}, logger)
+		userID, ok := middleware.GetUserIdFromContext(r.Context())
+		if !ok {
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
 		}
 
-		user, err := store.Queries.GetUserByID(r.Context(), id)
+		user, err := store.Queries.GetUserByID(r.Context(), userID)
 		if err != nil {
 			logger.Error("GetUserByID: %v", err)
 			responses.JSONResponse(w, http.StatusNotFound, map[string]string{"error": "user not found"}, logger)
@@ -115,8 +115,12 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 	// Get /api/users/{id}/calibration - Get user calibration data (protected)
 	mux.HandleFunc("GET /{id}/calibration", func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		cal, err := service.GetUserCalibrationData(r.Context(), store, id)
+		userID, ok := middleware.GetUserIdFromContext(r.Context())
+		if !ok {
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
+			return
+		}
+		cal, err := service.GetUserCalibrationData(r.Context(), store, userID)
 		if err != nil {
 			responses.JSONResponse(w, http.StatusNotFound, map[string]string{"error": "no calibration found"}, logger)
 			return
@@ -142,13 +146,13 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 	// DELETE /api/users/{id}/calibration - Delete user calibration data (protected)
 	mux.HandleFunc("DELETE /{id}/calibration", func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		if id == "" {
-			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "user ID is required"}, logger)
+		userID, ok := middleware.GetUserIdFromContext(r.Context())
+		if !ok {
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
 		}
 
-		err := service.DeleteUserCalibration(r.Context(), store, id)
+		err := service.DeleteUserCalibration(r.Context(), store, userID)
 		if err != nil {
 			logger.Error("DeleteUserCalibration: %v", err)
 			responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to reset calibration"}, logger)
