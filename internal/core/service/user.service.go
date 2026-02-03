@@ -34,7 +34,6 @@ func HandleCreateUserFromClerk(ctx context.Context, store *data.Store, data json
 	// Create user in database
 	_, err := store.Queries.CreateUser(ctx, sqlc.CreateUserParams{
 		ID:        userData.ID,
-		ClerkID:   userData.ID,
 		FirstName: userData.FirstName,
 		LastName:  userData.LastName,
 		Email:     email,
