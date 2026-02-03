@@ -6,8 +6,6 @@ import (
 	"server/internal/db"
 	"time"
 
-	sqlc "server/internal/db"
-
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -36,25 +34,25 @@ type WorkoutSessionDto struct {
 	UpdatedAt     time.Time  `json:"updatedAt"`
 }
 
-func CreateWorkoutSession(ctx context.Context, store *data.Store, dto CreateWorkoutSessionDto) (sqlc.WorkoutSession, error) {
+func CreateWorkoutSession(ctx context.Context, store *data.Store, dto CreateWorkoutSessionDto) (db.WorkoutSession, error) {
 
 	startTime := time.Now()
 	if dto.StartTime != nil && !dto.StartTime.IsZero() {
 		startTime = *dto.StartTime
 	}
 
-	return store.Queries.CreateWorkoutSession(ctx, sqlc.CreateWorkoutSessionParams{
+	return store.Queries.CreateWorkoutSession(ctx, db.CreateWorkoutSessionParams{
 		UserID:        dto.UserId,
 		WorkoutTypeID: dto.WorkoutTypeId,
 		StartTime:     pgtype.Timestamptz{Time: startTime, Valid: true},
 	})
 }
 
-func GetWorkoutSessionByID(ctx context.Context, store *data.Store, id string) (sqlc.WorkoutSession, error) {
+func GetWorkoutSessionByID(ctx context.Context, store *data.Store, id string) (db.WorkoutSession, error) {
 	return store.Queries.GetWorkoutSessionByID(ctx, id)
 }
 
-func UpdateWorkoutSession(ctx context.Context, store *data.Store, id string, dto UpdateWorkoutSessionDto) (sqlc.WorkoutSession, error) {
+func UpdateWorkoutSession(ctx context.Context, store *data.Store, id string, dto UpdateWorkoutSessionDto) (db.WorkoutSession, error) {
 	params := db.UpdateWorkoutSessionParams{
 		ID: id,
 		WorkoutTypeID: pgtype.Text{
@@ -90,7 +88,7 @@ func UpdateWorkoutSession(ctx context.Context, store *data.Store, id string, dto
 
 }
 
-func GetWorkoutTypes(ctx context.Context, store *data.Store) ([]sqlc.WorkoutType, error) {
+func GetWorkoutTypes(ctx context.Context, store *data.Store) ([]db.WorkoutType, error) {
 	return store.Queries.GetWorkoutTypeList(ctx)
 }
 

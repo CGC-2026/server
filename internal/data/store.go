@@ -7,14 +7,13 @@ import (
 	"time"
 
 	"server/internal/db"
-	sqlc "server/internal/db"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Store struct {
 	Pool    *pgxpool.Pool
-	Queries *sqlc.Queries
+	Queries *db.Queries
 }
 
 func NewStore(ctx context.Context) (*Store, error) {
@@ -33,7 +32,7 @@ func NewStore(ctx context.Context) (*Store, error) {
 		return nil, err
 	}
 
-	return &Store{Pool: pool, Queries: sqlc.New(pool)}, nil
+	return &Store{Pool: pool, Queries: db.New(pool)}, nil
 }
 
 func (s *Store) Close() { s.Pool.Close() }
@@ -46,7 +45,13 @@ func (s *Store) WithTransaction(ctx context.Context, fn func(*db.Queries) error)
 	}
 
 	// Ensure rollback if not committed
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(ctx); rbErr != nil {
+				err = fmt.Errorf("tx rollback failed: %v (original err: %w)", rbErr, err)
+			}
+		}
+	}()
 
 	// Create a new Queries instance with the transaction
 	qtx := s.Queries.WithTx(tx)

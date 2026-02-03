@@ -76,12 +76,6 @@ func AuthMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// GetUserID extracts the user ID from the request context
-func GetUserID(ctx context.Context) (string, bool) {
-	userID, ok := ctx.Value(UserIDKey).(string)
-	return userID, ok
-}
-
 // InitClerk initializes the Clerk client with the secret key
 func InitClerk() error {
 	secretKey := os.Getenv("CLERK_SECRET_KEY")
@@ -90,4 +84,18 @@ func InitClerk() error {
 	}
 	clerk.SetKey(secretKey)
 	return nil
+}
+
+func GetUserIdFromContext(ctx context.Context) (string, bool) {
+	val := ctx.Value(UserIDKey)
+	if val == nil {
+		return "", false
+	}
+
+	userId, ok := val.(string)
+	if !ok {
+		return "", false
+	}
+
+	return userId, true
 }

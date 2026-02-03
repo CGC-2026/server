@@ -8,8 +8,6 @@ import (
 	"server/internal/db"
 	"time"
 
-	sqlc "server/internal/db"
-
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -50,7 +48,7 @@ func HandleCreateUserFromClerk(ctx context.Context, store *data.Store, data json
 	}
 
 	// Create user in database
-	_, err := store.Queries.CreateUser(ctx, sqlc.CreateUserParams{
+	_, err := store.Queries.CreateUser(ctx, db.CreateUserParams{
 		ID:        userData.ID,
 		FirstName: userData.FirstName,
 		LastName:  userData.LastName,

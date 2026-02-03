@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"server/internal/core/service"
 	"server/internal/data"
+	"server/internal/http/middleware"
 	"server/internal/http/responses"
 	"server/internal/log"
 	"strconv"
@@ -82,14 +83,22 @@ func RegisterWorkoutRoutes(mux *http.ServeMux, logger log.Logger, store *data.St
 
 	// GET api/workouts/sessions/history - Retrieve workout session history
 	mux.HandleFunc("GET /sessions/history", func(w http.ResponseWriter, r *http.Request) {
-		userId, ok := r.Context().Value("user_id").(string)
+		userId, ok := middleware.GetUserIdFromContext(r.Context())
 		if !ok {
 			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"}, logger)
 			return
 		}
 
 		limit := int32(20)
-		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
+
+		// Ensure string is within 32-bit int range
+		limitStr := r.URL.Query().Get("limit")
+		if limitStr != "" {
+			l, err := strconv.ParseInt(limitStr, 10, 32)
+			if err != nil || l <= 0 {
+				responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "Invalid limit parameter"}, logger)
+				return
+			}
 			limit = int32(l)
 		}
 

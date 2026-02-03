@@ -127,7 +127,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
-SET id = $1, first_name = $2, last_name = $3, email = $4, image_url = $5, updated_at = NOW()
+SET first_name = $2, last_name = $3, email = $4, image_url = $5, updated_at = NOW()
 WHERE id = $1
 RETURNING id, first_name, last_name, email, image_url, created_at, updated_at
 `

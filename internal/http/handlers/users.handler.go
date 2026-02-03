@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"server/internal/core/service"
 	"server/internal/data"
@@ -14,7 +15,6 @@ import (
 type (
 	userDTO struct {
 		ID        string `json:"id"`
-		ClerkID   string `json:"clerk_id"`
 		FirstName string `json:"first_name"`
 		LastName  string `json:"last_name"`
 		Email     string `json:"email"`
@@ -42,8 +42,8 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 				FirstName: u.FirstName,
 				LastName:  u.LastName,
 				Email:     u.Email,
-				CreatedAt: u.CreatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
-				UpdatedAt: u.UpdatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
+				CreatedAt: u.CreatedAt.Time.Format(time.RFC3339),
+				UpdatedAt: u.UpdatedAt.Time.Format(time.RFC3339),
 			}
 			if u.ImageUrl.Valid {
 				dto.ImageURL = u.ImageUrl.String
@@ -55,7 +55,7 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 	// Get current user profile (protected)
 	mux.HandleFunc("GET /me", func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := middleware.GetUserID(r.Context())
+		userID, ok := middleware.GetUserIdFromContext(r.Context())
 		if !ok {
 			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
@@ -137,7 +137,7 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 			responses.JSONResponse(w, 500, "failed to save", logger)
 			return
 		}
-		responses.JSONResponse(w, 200, map[string]string{"status": "calibration succesfully saved"}, logger)
+		responses.JSONResponse(w, 200, map[string]string{"status": "calibration successfully saved"}, logger)
 	})
 
 	// DELETE /api/users/{id}/calibration - Delete user calibration data (protected)

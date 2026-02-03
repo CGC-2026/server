@@ -11,7 +11,7 @@ SELECT * FROM users WHERE email = $1;
 
 -- name: UpdateUser :one
 UPDATE users
-SET id = $1, first_name = $2, last_name = $3, email = $4, image_url = $5, updated_at = NOW()
+SET first_name = $2, last_name = $3, email = $4, image_url = $5, updated_at = NOW()
 WHERE id = $1
 RETURNING *;
 

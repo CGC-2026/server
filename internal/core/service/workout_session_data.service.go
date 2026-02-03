@@ -31,6 +31,14 @@ type CreateRepDto struct {
 
 func SaveWorkoutSet(ctx context.Context, store *data.Store, dto SaveWorkoutSetDto) error {
 	return store.WithTransaction(ctx, func(qtx *db.Queries) error {
+		var coachingScoreBytes []byte
+		if dto.CoachingScore != nil {
+			b, err := json.Marshal(dto.CoachingScore)
+			if err != nil {
+				return err
+			}
+			coachingScoreBytes = b
+		}
 		set, err := qtx.CreateWorkoutSet(ctx, db.CreateWorkoutSetParams{
 			WorkoutSessionID: dto.WorkoutSessionID,
 			SetNumber:        dto.SetNumber,
@@ -43,6 +51,16 @@ func SaveWorkoutSet(ctx context.Context, store *data.Store, dto SaveWorkoutSetDt
 					return time.Time{}
 				}(),
 			},
+			EndTime: pgtype.Timestamptz{
+				Valid: dto.EndTime != nil,
+				Time: func() time.Time {
+					if dto.EndTime != nil {
+						return *dto.EndTime
+					}
+					return time.Time{}
+				}(),
+			},
+			CoachingScore: coachingScoreBytes,
 		})
 		if err != nil {
 			return err
@@ -53,19 +71,19 @@ func SaveWorkoutSet(ctx context.Context, store *data.Store, dto SaveWorkoutSetDt
 				WorkoutSetID: set.ID,
 				RepNumber:    r.RepNumber,
 				StartTime: pgtype.Timestamptz{
-					Valid: dto.StartTime != nil,
+					Valid: r.StartTime != nil,
 					Time: func() time.Time {
-						if dto.StartTime != nil {
-							return *dto.StartTime
+						if r.StartTime != nil {
+							return *r.StartTime
 						}
 						return time.Time{}
 					}(),
 				},
 				EndTime: pgtype.Timestamptz{
-					Valid: dto.EndTime != nil,
+					Valid: r.EndTime != nil,
 					Time: func() time.Time {
-						if dto.EndTime != nil {
-							return *dto.EndTime
+						if r.EndTime != nil {
+							return *r.EndTime
 						}
 						return time.Time{}
 					}(),
