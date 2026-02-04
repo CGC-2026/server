@@ -34,4 +34,4 @@ COMMANDS_JSON=$(cat <<JSON
 JSON
 )
 
-./scripts/ci/ssm_run_and_wait.sh "${COMMANDS_JSON}"
+bash ./scripts/ci/ssm_run_and_wait.sh "${COMMANDS_JSON}"
