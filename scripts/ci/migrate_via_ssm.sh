@@ -19,9 +19,9 @@ COMMANDS_JSON=$(cat <<JSON
     "aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin \$ECR_REGISTRY",
     "DBURL=\$(aws ssm get-parameter --region $AWS_REGION --with-decryption --name /cgc-2026-prod/api/database_url --query Parameter.Value --output text)",
     "sudo docker pull $MIGRATOR_IMAGE_URI",
-    "sudo docker run --rm -e GOOSE_DRIVER=postgres -e GOOSE_DBSTRING=\"\\$DBURL\" $MIGRATOR_IMAGE_URI -dir ./db/migrations up"
+    "sudo docker run --rm -e GOOSE_DRIVER=postgres -e GOOSE_DBSTRING=\"\$DBURL\" $MIGRATOR_IMAGE_URI -dir ./db/migrations up"
 ]
 JSON
 )
 
-./scripts/ci/ssm_run_and_wait.sh "${COMMANDS_JSON}"
+bash ./scripts/ci/ssm_run_and_wait.sh "${COMMANDS_JSON}"
