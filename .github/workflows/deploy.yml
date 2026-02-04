@@ -1,4 +1,4 @@
-name: Build & Deploy (prod)
+name: Build, Migrate, & Deploy (prod)
 
 on:
   push:
@@ -26,129 +26,59 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build & push image
+      - name: Build & push images
         env:
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          ECR_REGISTRY="$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION}.amazonaws.com"
-          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
+          GITHUB_SHA: ${{ github.sha }}
+        run: bash ./scripts/ci/build_and_push.sh
+          
+  migrate:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-          docker build -f Dockerfile.prod -t "${IMAGE_URI}" .
-          docker push "${IMAGE_URI}"
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Run Migrations via SSM
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: bash ./scripts/ci/migrate_via_ssm.sh
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, migrate]
 
     permissions:
       id-token: write
       contents: read
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Configure AWS credentials with OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to EC2 via SSM
-        run: |
-          set -euo pipefail
-
-          ECR_REGISTRY="$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION}.amazonaws.com"
-          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPO}:${GITHUB_SHA}"
-          echo "Deploying image ${IMAGE_URI} to instance"
-          test -n "${IMAGE_URI}"
-
-          COMMANDS=$(cat <<JSON
-          [
-            "set -euo pipefail",
-            "AWS_REGION=${AWS_REGION}",
-            "IMAGE_URI=${IMAGE_URI}",
-            "CONTAINER_NAME=${CONTAINER_NAME}",
-            "echo IMAGE_URI=$IMAGE_URI",
-            "if ! command -v docker >/dev/null 2>&1; then sudo dnf -y install docker; sudo systemctl enable --now docker; fi",
-            "sudo usermod -aG docker ec2-user || true",
-            "ECR_REGISTRY=\${IMAGE_URI%%/*}",
-            "aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin \$ECR_REGISTRY",
-            "DBURL=\$(aws ssm get-parameter --region $AWS_REGION --with-decryption --name /cgc-2026-prod/api/database_url --query Parameter.Value --output text)",
-            "CLERK_SECRET=\$(aws ssm get-parameter --region $AWS_REGION --with-decryption --name /cgc-2026-prod/api/clerk_secret_key --query Parameter.Value --output text)",
-            "sudo docker pull $IMAGE_URI",
-            "sudo docker rm -f $CONTAINER_NAME || true",
-            "sudo docker run -d --restart unless-stopped --name $CONTAINER_NAME -p 8080:8080 -e PORT=8080 -e DATABASE_URL=\"\$DBURL\" -e CLERK_SECRET_KEY=\"\$CLERK_SECRET\" $IMAGE_URI",
-            "sleep 2",
-            "curl -fsS http://localhost:8080/health"
-          ]
-          JSON
-          )
-
-          COMMAND_ID=$(aws ssm send-command \
-            --region "${AWS_REGION}" \
-            --instance-ids "${EC2_INSTANCE_ID}" \
-            --document-name "AWS-RunShellScript" \
-            --parameters "commands=${COMMANDS}" \
-            --query 'Command.CommandId' \
-            --output text)
-
-          echo "Waiting for SSM command ${COMMAND_ID} to complete..."
-          for i in {1..60}; do
-            STATUS=$(aws ssm get-command-invocation \
-              --region "${AWS_REGION}" \
-              --command-id "${COMMAND_ID}" \
-              --instance-id "${EC2_INSTANCE_ID}" \
-              --query 'Status' \
-              --output text 2>/dev/null || echo "Pending")
-            
-            case "${STATUS}" in
-              Success)
-                echo "SSM command succeeded"
-                break
-                ;;
-              Failed|Cancelled|TimedOut)
-                echo "SSM command failed with status: ${STATUS}"
-                aws ssm get-command-invocation \
-                  --region "${AWS_REGION}" \
-                  --command-id "${COMMAND_ID}" \
-                  --instance-id "${EC2_INSTANCE_ID}" \
-                  --query 'StandardErrorContent' \
-                  --output text
-                exit 1
-                ;;
-              *)
-                echo "Status: ${STATUS} (attempt $i/60)"
-                sleep 5
-                ;;
-            esac
-          done
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: bash ./scripts/ci/deploy_via_ssm.sh
 
       - name: Verify health
-        run: |
-          set -euo pipefail
-
-          PUBLIC_IP=$(aws ec2 describe-instances \
-            --region "${AWS_REGION}" \
-            --instance-ids "${EC2_INSTANCE_ID}" \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
-
-            test "${PUBLIC_IP}" != "None"
-
-          URL="http://${PUBLIC_IP}:8080/health"
-          echo "Checking ${URL}"
-
-          for i in {1..20}; do
-            if curl -fsS "${URL}" >/dev/null; then
-              echo "Health check passed"
-              exit 0
-            fi
-            echo "Health not ready yet (attempt $i/20) — retrying..."
-            sleep 3
-          done
-
-          echo "Health check failed"
-          exit 1
+        run: bash ./scripts/ci/health_check.sh
+          

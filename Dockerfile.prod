@@ -7,11 +7,14 @@ RUN apk add --no-cache git
 COPY go.mod go.sum ./
 RUN go mod download
 
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install github.com/pressly/goose/v3/cmd/goose@latest
+
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/app ./cmd/server
 
-FROM gcr.io/distroless/static:nonroot
+# Create server target
+FROM gcr.io/distroless/static:nonroot AS app
 WORKDIR /
 COPY --from=build /out/app /app
 
@@ -19,3 +22,13 @@ EXPOSE 8080
 USER nonroot:nonroot
 
 ENTRYPOINT [ "/app" ]
+
+# Create migrator target
+FROM alpine:3.20 AS migrator
+RUN apk add --no-cache ca-certificates
+WORKDIR /work
+
+COPY --from=build /go/bin/goose /usr/local/bin/goose
+COPY --from=build /app/db/migrations ./db/migrations
+
+ENTRYPOINT [ "goose" ]
