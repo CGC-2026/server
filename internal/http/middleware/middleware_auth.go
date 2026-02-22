@@ -23,6 +23,7 @@ func AuthMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Development mode bypass (Requires development environment and secondary bypass secret)
+			// Required if on development environment and you want to bypass auth for testing without valid Clerk tokens
 			isDev := os.Getenv("APP_ENV") == "development"
 
 			devSecret := os.Getenv("DEV_BYPASS_SECRET")
