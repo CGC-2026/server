@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	http "server/internal/http"
+	httpserver "server/internal/http"
 	"server/internal/log"
 )
 
@@ -15,8 +15,8 @@ func main() {
 	logger := log.DefaultLogger
 
 	// Create server with default config
-	config := http.DefaultServerConfig()
-	server := http.NewServer(config)
+	config := httpserver.DefaultServerConfig()
+	server := httpserver.NewServer(config)
 
 	// Channel to listen for errors from server
 	errChan := make(chan error)
