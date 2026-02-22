@@ -22,6 +22,20 @@ const UserIDKey contextKey = "userID"
 func AuthMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Development mode bypass (Requires development environment and secondary bypass secret)
+			isDev := os.Getenv("APP_ENV") == "development"
+
+			devSecret := os.Getenv("DEV_BYPASS_SECRET")
+			providedSecret := r.Header.Get("X-Dev-Secret")
+			devUserId := r.Header.Get("X-Dev-User-Id")
+
+			if isDev && devSecret != "" && providedSecret == devSecret && devUserId != "" {
+				logger.Info("Development mode: bypassing auth for user %s", devUserId)
+				ctx := context.WithValue(r.Context(), UserIDKey, devUserId)
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+
 			// Get the authorization header
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
