@@ -154,6 +154,24 @@ This is useful for debugging or quick database exploration without using `psql`.
 
 ---
 
+## Development Authentication Bypass Setp
+
+For local development and testing of protected endpoints:
+
+### Enable Development Mode
+
+In your `.env` file:
+
+```bash
+APP_ENV=development
+DEV_BYPASS_SECRET=your-local-secret
+```
+
+When calling protected endpoints, the following headers are required:
+
+- `X-Dev-Secret`
+- `X-Dev-User-Id`
+
 ## Documentation
 
 Go: <https://go.dev/doc/>
