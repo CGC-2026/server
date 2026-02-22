@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS user_calibration (
     standing_pitch_angle DOUBLE PRECISION NOT NULL,
     standing_roll_angle DOUBLE PRECISION NOT NULL,
 
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOT NULL NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOT NULL NOW()
 );
 
 -- +goose StatementEnd

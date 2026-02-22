@@ -97,7 +97,7 @@ func InitClerk() error {
 func GetDBUserIDFromClerkID(store *data.Store, r *http.Request) (string, error) {
 	clerkID, ok := GetUserID(r.Context())
 	if !ok {
-		return "", fmt.Errorf("Missing userId")
+		return "", fmt.Errorf("Missing userID")
 	}
 
 	user, err := store.Queries.GetUserByClerkID(r.Context(), clerkID)
