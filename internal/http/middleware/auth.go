@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"server/internal/data"
 	"server/internal/http/responses"
 	"server/internal/log"
 
@@ -76,4 +77,17 @@ func InitClerk() error {
 	}
 	clerk.SetKey(secretKey)
 	return nil
+}
+
+func GetDBUserIDFromClerkID(store *data.Store, r *http.Request) (string, error) {
+	clerkID, ok := GetUserID(r.Context())
+	if !ok {
+		return "", fmt.Errorf("Missing userId")
+	}
+
+	user, err := store.Queries.GetUserByClerkID(r.Context(), clerkID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get user by clerk ID: %w", err)
+	}
+	return user.ID, nil
 }

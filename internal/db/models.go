@@ -18,3 +18,13 @@ type User struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
+
+type UserCalibration struct {
+	ID                 string             `json:"id"`
+	UserID             string             `json:"user_id"`
+	StandingYawAngle   float64            `json:"standing_yaw_angle"`
+	StandingPitchAngle float64            `json:"standing_pitch_angle"`
+	StandingRollAngle  float64            `json:"standing_roll_angle"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
