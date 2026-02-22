@@ -30,7 +30,7 @@ func AuthMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 			devUserId := r.Header.Get("X-Dev-User-Id")
 
 			if isDev && devSecret != "" && providedSecret == devSecret && devUserId != "" {
-				logger.Info("Development mode: bypassing auth for user %s", devUserId)
+				logger.Info("Development mode: bypassing auth for user")
 				ctx := context.WithValue(r.Context(), UserIDKey, devUserId)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
