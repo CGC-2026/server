@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"server/internal/data"
 	"server/internal/db"
@@ -48,7 +49,7 @@ type (
 func dtoFromCalibrationRow(row db.UserCalibration) calibrationResponseDTO {
 	updated := ""
 	if row.UpdatedAt.Valid {
-		updated = row.UpdatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ")
+		updated = row.UpdatedAt.Time.Format(time.RFC3339)
 	}
 	return calibrationResponseDTO{
 		UserID:             row.UserID,
@@ -77,12 +78,12 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 
 		created := ""
 		if user.CreatedAt.Valid {
-			created = user.CreatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ")
+			created = user.CreatedAt.Time.Format(time.RFC3339)
 		}
 
 		updated := ""
 		if user.UpdatedAt.Valid {
-			updated = user.UpdatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ")
+			updated = user.UpdatedAt.Time.Format(time.RFC3339)
 		}
 
 		dto := userDTO{
