@@ -1,12 +1,18 @@
 package handlers
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
+	"time"
 
 	"server/internal/data"
+	"server/internal/db"
 	"server/internal/http/middleware"
 	"server/internal/http/responses"
 	"server/internal/log"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type (
@@ -22,37 +28,43 @@ type (
 	}
 )
 
+type (
+	calibrationResponseDTO struct {
+		UserID             string  `json:"user_id"`
+		StandingYawAngle   float64 `json:"standing_yaw_angle"`
+		StandingPitchAngle float64 `json:"standing_pitch_angle"`
+		StandingRollAngle  float64 `json:"standing_roll_angle"`
+		UpdatedAt          string  `json:"updated_at"`
+	}
+)
+
+type (
+	calibrationRequestDTO struct {
+		StandingYawAngle   float64 `json:"standing_yaw_angle"`
+		StandingPitchAngle float64 `json:"standing_pitch_angle"`
+		StandingRollAngle  float64 `json:"standing_roll_angle"`
+	}
+)
+
+func dtoFromCalibrationRow(row db.UserCalibration) calibrationResponseDTO {
+	updated := ""
+	if row.UpdatedAt.Valid {
+		updated = row.UpdatedAt.Time.Format(time.RFC3339)
+	}
+	return calibrationResponseDTO{
+		UserID:             row.UserID,
+		StandingYawAngle:   row.StandingYawAngle,
+		StandingPitchAngle: row.StandingPitchAngle,
+		StandingRollAngle:  row.StandingRollAngle,
+		UpdatedAt:          updated,
+	}
+}
+
 func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Store) {
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		users, err := store.Queries.ListUsers(r.Context())
-		if err != nil {
-			logger.Error("ListUsers: %v", err)
-			responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to list users"}, logger)
-			return
-		}
-
-		out := make([]userDTO, 0, len(users))
-		for _, u := range users {
-			dto := userDTO{
-				ID:        u.ID,
-				FirstName: u.FirstName,
-				LastName:  u.LastName,
-				Email:     u.Email,
-				CreatedAt: u.CreatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
-				UpdatedAt: u.UpdatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
-			}
-			if u.ImageUrl.Valid {
-				dto.ImageURL = u.ImageUrl.String
-			}
-			out = append(out, dto)
-		}
-		responses.JSONResponse(w, http.StatusOK, out, logger)
-	})
-
 	// Get current user profile (protected)
 	mux.HandleFunc("GET /me", func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := middleware.GetUserID(r.Context())
-		if !ok {
+		userID, err := middleware.GetDBUserIDFromClerkID(store, r)
+		if err != nil {
 			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
 		}
@@ -64,13 +76,23 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 			return
 		}
 
+		created := ""
+		if user.CreatedAt.Valid {
+			created = user.CreatedAt.Time.Format(time.RFC3339)
+		}
+
+		updated := ""
+		if user.UpdatedAt.Valid {
+			updated = user.UpdatedAt.Time.Format(time.RFC3339)
+		}
+
 		dto := userDTO{
 			ID:        user.ID,
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
 			Email:     user.Email,
-			CreatedAt: user.CreatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
-			UpdatedAt: user.UpdatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
+			CreatedAt: created,
+			UpdatedAt: updated,
 		}
 		if user.ImageUrl.Valid {
 			dto.ImageURL = user.ImageUrl.String
@@ -79,33 +101,68 @@ func RegisterUsersRoutes(mux *http.ServeMux, logger log.Logger, store *data.Stor
 		responses.JSONResponse(w, http.StatusOK, dto, logger)
 	})
 
-	// Get user by ID (protected)
-	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		if id == "" {
-			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "user ID is required"}, logger)
-			return
-		}
-
-		user, err := store.Queries.GetUserByID(r.Context(), id)
+	// GET /api/users/me/calibration - get current user's calibration data
+	mux.HandleFunc("GET /me/calibration", func(w http.ResponseWriter, r *http.Request) {
+		userId, err := middleware.GetDBUserIDFromClerkID(store, r)
 		if err != nil {
-			logger.Error("GetUserByID: %v", err)
-			responses.JSONResponse(w, http.StatusNotFound, map[string]string{"error": "user not found"}, logger)
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
 			return
 		}
 
-		dto := userDTO{
-			ID:        user.ID,
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
-			Email:     user.Email,
-			CreatedAt: user.CreatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
-			UpdatedAt: user.UpdatedAt.Time.Format("YYYY-MM-DDTHH:MM:SSZ"),
-		}
-		if user.ImageUrl.Valid {
-			dto.ImageURL = user.ImageUrl.String
+		calibration, err := store.Queries.GetUserCalibrationByUserID(r.Context(), userId)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				responses.JSONResponse(w, http.StatusNotFound, map[string]string{"error": "no calibration data found for user"}, logger)
+				return
+			}
+			responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to get user calibration"}, logger)
+			return
 		}
 
-		responses.JSONResponse(w, http.StatusOK, dto, logger)
+		responses.JSONResponse(w, http.StatusOK, dtoFromCalibrationRow(calibration), logger)
+	})
+
+	// POST /api/users/me/calibration - upsert current user's calibration data
+	mux.HandleFunc("POST /me/calibration", func(w http.ResponseWriter, r *http.Request) {
+		userId, err := middleware.GetDBUserIDFromClerkID(store, r)
+		if err != nil {
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
+			return
+		}
+
+		var request calibrationRequestDTO
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			responses.JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"}, logger)
+			return
+		}
+
+		calibration, err := store.Queries.UpsertUserCalibration(r.Context(), db.UpsertUserCalibrationParams{
+			UserID:             userId,
+			StandingYawAngle:   request.StandingYawAngle,
+			StandingPitchAngle: request.StandingPitchAngle,
+			StandingRollAngle:  request.StandingRollAngle,
+		})
+		if err != nil {
+			responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to upsert user calibration"}, logger)
+			return
+		}
+
+		responses.JSONResponse(w, http.StatusOK, dtoFromCalibrationRow(calibration), logger)
+	})
+
+	// DELETE /api/users/me/calibration - delete current user's calibration data
+	mux.HandleFunc("DELETE /me/calibration", func(w http.ResponseWriter, r *http.Request) {
+		userId, err := middleware.GetDBUserIDFromClerkID(store, r)
+		if err != nil {
+			responses.JSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"}, logger)
+			return
+		}
+
+		if err := store.Queries.DeleteUserCalibrationByUserID(r.Context(), userId); err != nil {
+			responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete user calibration"}, logger)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
