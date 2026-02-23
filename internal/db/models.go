@@ -28,3 +28,23 @@ type UserCalibration struct {
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
+
+type WorkoutSession struct {
+	ID            string             `json:"id"`
+	UserID        string             `json:"user_id"`
+	WorkoutTypeID string             `json:"workout_type_id"`
+	StartTime     pgtype.Timestamptz `json:"start_time"`
+	EndTime       pgtype.Timestamptz `json:"end_time"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WorkoutType struct {
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	Config      []byte             `json:"config"`
+	ImageUrl    pgtype.Text        `json:"image_url"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
