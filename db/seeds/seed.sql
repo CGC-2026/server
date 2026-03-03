@@ -6,7 +6,11 @@
 -- Create a test user
 INSERT INTO users (id, clerk_id, first_name, last_name, email)
 VALUES ('test-user','user_396cTR8sDnxPxTk8VS4tMfCgd8k', 'Test', 'User', 'test@example.com')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  clerk_id = EXCLUDED.clerk_id,
+  first_name = EXCLUDED.first_name,
+  last_name = EXCLUDED.last_name,
+  email = EXCLUDED.email;
 
 -- Seed data for workout_type table
 INSERT INTO workout_type (id, name, description, config)
@@ -21,7 +25,7 @@ VALUES (
         "minDepthAngle": 30
     }'::jsonb
 )
-ON CONFLICT (clerk_id) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
     config = EXCLUDED.config;
@@ -30,8 +34,8 @@ ON CONFLICT (clerk_id) DO UPDATE SET
 INSERT INTO workout_session (id, user_id, workout_type_id, start_time, end_time)
 VALUES (
     'dev-session-001', 
-    'user_396cTR8sDnxPxTk8VS4tMfCgd8k', 
+    'test-user', 
     'workout-squat-001', 
     NOW() - INTERVAL '1 day', 
     NOW() - INTERVAL '23 hours'
-) ON CONFLICT DO NOTHING;
+) ON CONFLICT (id) DO NOTHING;

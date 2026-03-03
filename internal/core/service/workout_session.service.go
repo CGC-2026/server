@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"server/internal/core/service/helpers"
 	"server/internal/data"
 	"server/internal/db"
 	"time"
@@ -13,23 +14,23 @@ import (
 
 type CreateWorkoutSessionDto struct {
 	ID            string     `json:"id"`
-	UserId        string     `json:"userId"`
-	WorkoutTypeId string     `json:"workoutTypeId"`
+	UserID        string     `json:"userId"`
+	WorkoutTypeID string     `json:"workoutTypeId"`
 	StartTime     *time.Time `json:"startTime"`
 }
 
 type UpdateWorkoutSessionDto struct {
 	ID            string     `json:"id"`
-	UserId        string     `json:"userId"`
-	WorkoutTypeId string     `json:"workoutTypeId"`
+	UserID        string     `json:"userId"`
+	WorkoutTypeID string     `json:"workoutTypeId"`
 	StartTime     *time.Time `json:"startTime"`
 	EndTime       *time.Time `json:"endTime"`
 }
 
 type WorkoutSessionDto struct {
 	ID            string     `json:"id"`
-	UserId        string     `json:"userId"`
-	WorkoutTypeId string     `json:"workoutTypeId"`
+	UserID        string     `json:"userId"`
+	WorkoutTypeID string     `json:"workoutTypeId"`
 	StartTime     *time.Time `json:"startTime"`
 	EndTime       *time.Time `json:"endTime"`
 	CreatedAt     time.Time  `json:"createdAt"`
@@ -44,9 +45,10 @@ func CreateWorkoutSession(ctx context.Context, store *data.Store, dto CreateWork
 	}
 
 	return store.Queries.CreateWorkoutSession(ctx, sqlc.CreateWorkoutSessionParams{
-		UserID:        dto.UserId,
-		WorkoutTypeID: dto.WorkoutTypeId,
+		UserID:        dto.UserID,
+		WorkoutTypeID: dto.WorkoutTypeID,
 		StartTime:     pgtype.Timestamptz{Time: startTime, Valid: true},
+		EndTime:       pgtype.Timestamptz{Valid: false},
 	})
 }
 
@@ -56,34 +58,10 @@ func GetWorkoutSessionByID(ctx context.Context, store *data.Store, id string) (s
 
 func UpdateWorkoutSession(ctx context.Context, store *data.Store, id string, dto UpdateWorkoutSessionDto) (sqlc.WorkoutSession, error) {
 	params := db.UpdateWorkoutSessionParams{
-		ID: id,
-		WorkoutTypeID: pgtype.Text{
-			Valid: dto.WorkoutTypeId != "",
-			String: func() string {
-				if dto.WorkoutTypeId != "" {
-					return dto.WorkoutTypeId
-				}
-				return ""
-			}(),
-		},
-		StartTime: pgtype.Timestamptz{
-			Valid: dto.StartTime != nil,
-			Time: func() time.Time {
-				if dto.StartTime != nil {
-					return *dto.StartTime
-				}
-				return time.Time{}
-			}(),
-		},
-		EndTime: pgtype.Timestamptz{
-			Valid: dto.EndTime != nil,
-			Time: func() time.Time {
-				if dto.EndTime != nil {
-					return *dto.EndTime
-				}
-				return time.Time{}
-			}(),
-		},
+		ID:            id,
+		WorkoutTypeID: helpers.NewNullString(dto.WorkoutTypeID),
+		StartTime:     helpers.NewNullTime(dto.StartTime),
+		EndTime:       helpers.NewNullTime(dto.EndTime),
 	}
 
 	return store.Queries.UpdateWorkoutSession(ctx, params)

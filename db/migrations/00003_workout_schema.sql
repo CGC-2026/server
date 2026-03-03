@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS workout_type (
     description TEXT,
     config JSONB NOT NULL, -- Store workout-specific configuration in JSON format
     image_url TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS workout_session (
@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS workout_session (
     workout_type_id TEXT NOT NULL REFERENCES workout_type(id) ON DELETE CASCADE,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- +goose StatementEnd
