@@ -15,7 +15,12 @@ CREATE TABLE IF NOT EXISTS workout_session (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     workout_type_id TEXT NOT NULL REFERENCES workout_type(id) ON DELETE CASCADE,
-    start_time TIMESTAMPTZ NOT NULL,
+    
+    calibration_yaw_angle DOUBLE PRECISION,
+    calibration_pitch_angle DOUBLE PRECISION,
+    calibration_roll_angle DOUBLE PRECISION,
+
+    start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     end_time TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

@@ -22,3 +22,10 @@ func NewNullTime(t *time.Time) pgtype.Timestamptz {
 		Valid: true,
 	}
 }
+
+func NewNullFloat(v *float64) pgtype.Float8 {
+	if v == nil {
+		return pgtype.Float8{Valid: false}
+	}
+	return pgtype.Float8{Float64: *v, Valid: true}
+}

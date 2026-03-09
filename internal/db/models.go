@@ -30,13 +30,16 @@ type UserCalibration struct {
 }
 
 type WorkoutSession struct {
-	ID            string             `json:"id"`
-	UserID        string             `json:"user_id"`
-	WorkoutTypeID string             `json:"workout_type_id"`
-	StartTime     pgtype.Timestamptz `json:"start_time"`
-	EndTime       pgtype.Timestamptz `json:"end_time"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ID                    string             `json:"id"`
+	UserID                string             `json:"user_id"`
+	WorkoutTypeID         string             `json:"workout_type_id"`
+	CalibrationYawAngle   pgtype.Float8      `json:"calibration_yaw_angle"`
+	CalibrationPitchAngle pgtype.Float8      `json:"calibration_pitch_angle"`
+	CalibrationRollAngle  pgtype.Float8      `json:"calibration_roll_angle"`
+	StartTime             pgtype.Timestamptz `json:"start_time"`
+	EndTime               pgtype.Timestamptz `json:"end_time"`
+	CreatedAt             pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
 }
 
 type WorkoutType struct {

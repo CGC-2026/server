@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"server/internal/core/service/helpers"
 	"server/internal/data"
 	"server/internal/db"
@@ -12,32 +13,41 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type CreateWorkoutSessionDto struct {
-	ID            string     `json:"id"`
-	UserID        string     `json:"userId"`
-	WorkoutTypeID string     `json:"workoutTypeId"`
-	StartTime     *time.Time `json:"startTime"`
+type CreateWorkoutSessionDTO struct {
+	ID                    string     `json:"id"`
+	UserID                string     `json:"userId"`
+	WorkoutTypeID         string     `json:"workoutTypeId"`
+	CalibrationYawAngle   *float64   `json:"calibrationYawAngle"`
+	CalibrationPitchAngle *float64   `json:"calibrationPitchAngle"`
+	CalibrationRollAngle  *float64   `json:"calibrationRollAngle"`
+	StartTime             *time.Time `json:"startTime"`
 }
 
-type UpdateWorkoutSessionDto struct {
-	ID            string     `json:"id"`
-	UserID        string     `json:"userId"`
-	WorkoutTypeID string     `json:"workoutTypeId"`
-	StartTime     *time.Time `json:"startTime"`
-	EndTime       *time.Time `json:"endTime"`
+type UpdateWorkoutSessionDTO struct {
+	ID                    string     `json:"id"`
+	UserID                string     `json:"userId"`
+	WorkoutTypeID         string     `json:"workoutTypeId"`
+	CalibrationYawAngle   *float64   `json:"calibrationYawAngle"`
+	CalibrationPitchAngle *float64   `json:"calibrationPitchAngle"`
+	CalibrationRollAngle  *float64   `json:"calibrationRollAngle"`
+	StartTime             *time.Time `json:"startTime"`
+	EndTime               *time.Time `json:"endTime"`
 }
 
-type WorkoutSessionDto struct {
-	ID            string     `json:"id"`
-	UserID        string     `json:"userId"`
-	WorkoutTypeID string     `json:"workoutTypeId"`
-	StartTime     *time.Time `json:"startTime"`
-	EndTime       *time.Time `json:"endTime"`
-	CreatedAt     time.Time  `json:"createdAt"`
-	UpdatedAt     time.Time  `json:"updatedAt"`
+type WorkoutSessionDTO struct {
+	ID                    string     `json:"id"`
+	UserID                string     `json:"userId"`
+	WorkoutTypeID         string     `json:"workoutTypeId"`
+	CalibrationYawAngle   *float64   `json:"calibrationYawAngle"`
+	CalibrationPitchAngle *float64   `json:"calibrationPitchAngle"`
+	CalibrationRollAngle  *float64   `json:"calibrationRollAngle"`
+	StartTime             *time.Time `json:"startTime"`
+	EndTime               *time.Time `json:"endTime"`
+	CreatedAt             time.Time  `json:"createdAt"`
+	UpdatedAt             time.Time  `json:"updatedAt"`
 }
 
-func CreateWorkoutSession(ctx context.Context, store *data.Store, dto CreateWorkoutSessionDto) (sqlc.WorkoutSession, error) {
+func CreateWorkoutSession(ctx context.Context, store *data.Store, userID string, dto CreateWorkoutSessionDTO) (sqlc.WorkoutSession, error) {
 
 	startTime := time.Now()
 	if dto.StartTime != nil && !dto.StartTime.IsZero() {
@@ -45,10 +55,13 @@ func CreateWorkoutSession(ctx context.Context, store *data.Store, dto CreateWork
 	}
 
 	return store.Queries.CreateWorkoutSession(ctx, sqlc.CreateWorkoutSessionParams{
-		UserID:        dto.UserID,
-		WorkoutTypeID: dto.WorkoutTypeID,
-		StartTime:     pgtype.Timestamptz{Time: startTime, Valid: true},
-		EndTime:       pgtype.Timestamptz{Valid: false},
+		UserID:                userID,
+		WorkoutTypeID:         dto.WorkoutTypeID,
+		CalibrationYawAngle:   helpers.NewNullFloat(dto.CalibrationYawAngle),
+		CalibrationPitchAngle: helpers.NewNullFloat(dto.CalibrationPitchAngle),
+		CalibrationRollAngle:  helpers.NewNullFloat(dto.CalibrationRollAngle),
+		StartTime:             pgtype.Timestamptz{Time: startTime, Valid: true},
+		EndTime:               pgtype.Timestamptz{Valid: false},
 	})
 }
 
@@ -56,20 +69,28 @@ func GetWorkoutSessionByID(ctx context.Context, store *data.Store, id string) (s
 	return store.Queries.GetWorkoutSessionByID(ctx, id)
 }
 
-func UpdateWorkoutSession(ctx context.Context, store *data.Store, id string, dto UpdateWorkoutSessionDto) (sqlc.WorkoutSession, error) {
+func UpdateWorkoutSession(ctx context.Context, store *data.Store, userID string, sessionID string, dto UpdateWorkoutSessionDTO) (sqlc.WorkoutSession, error) {
+	existingUser, err := store.Queries.GetWorkoutSessionByID(ctx, sessionID)
+	if err != nil {
+		return db.WorkoutSession{}, err
+	}
+
+	if existingUser.UserID != userID {
+		return db.WorkoutSession{}, fmt.Errorf("forbidden")
+	}
+
 	params := db.UpdateWorkoutSessionParams{
-		ID:            id,
-		WorkoutTypeID: helpers.NewNullString(dto.WorkoutTypeID),
-		StartTime:     helpers.NewNullTime(dto.StartTime),
-		EndTime:       helpers.NewNullTime(dto.EndTime),
+		ID:                    sessionID,
+		WorkoutTypeID:         helpers.NewNullString(dto.WorkoutTypeID),
+		CalibrationYawAngle:   helpers.NewNullFloat(dto.CalibrationYawAngle),
+		CalibrationPitchAngle: helpers.NewNullFloat(dto.CalibrationPitchAngle),
+		CalibrationRollAngle:  helpers.NewNullFloat(dto.CalibrationRollAngle),
+		StartTime:             helpers.NewNullTime(dto.StartTime),
+		EndTime:               helpers.NewNullTime(dto.EndTime),
 	}
 
 	return store.Queries.UpdateWorkoutSession(ctx, params)
 
-}
-
-func GetWorkoutTypes(ctx context.Context, store *data.Store) ([]sqlc.WorkoutType, error) {
-	return store.Queries.GetWorkoutTypeList(ctx)
 }
 
 func GetUserWorkoutSessionHistory(ctx context.Context, store *data.Store, userId string, limit int32) ([]db.GetUserWorkoutSessionHistoryRow, error) {
