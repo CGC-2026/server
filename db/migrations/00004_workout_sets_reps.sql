@@ -23,5 +23,5 @@ CREATE TABLE IF NOT EXISTS workout_session_set_rep (
 );
 
 -- +goose Down
-DROP TABLE IF EXISTS workout_session_set;
 DROP TABLE IF EXISTS workout_session_set_rep;
+DROP TABLE IF EXISTS workout_session_set;
