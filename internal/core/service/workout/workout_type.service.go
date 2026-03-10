@@ -1,4 +1,4 @@
-package service
+package workout
 
 import (
 	"context"
