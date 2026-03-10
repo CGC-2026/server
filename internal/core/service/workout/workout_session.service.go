@@ -107,17 +107,22 @@ func GetWorkoutSessionByID(ctx context.Context, store *data.Store, userID string
 		return WorkoutSessionDTO{}, err
 	}
 
+	repRows, err := store.Queries.GetWorkoutSessionSetRepsBySessionID(ctx, sessionID)
+	if err != nil {
+		return WorkoutSessionDTO{}, err
+	}
+
+	repsBySetID := make(map[string][]db.WorkoutSessionSetRep, len(setRows))
+	for _, repRow := range repRows {
+		repsBySetID[repRow.WorkoutSessionSetID] = append(repsBySetID[repRow.WorkoutSessionSetID], repRow)
+	}
+
 	sets := make([]WorkoutSessionSetDTO, 0, len(setRows))
 
 	for _, setRow := range setRows {
-		repRows, err := store.Queries.GetWorkoutSessionSetRepsBySessionSetID(ctx, setRow.ID)
-		if err != nil {
-			return WorkoutSessionDTO{}, err
-		}
+		reps := make([]WorkoutSessionSetRepDTO, 0, len(repsBySetID[setRow.ID]))
 
-		reps := make([]WorkoutSessionSetRepDTO, 0, len(repRows))
-
-		for _, repRow := range repRows {
+		for _, repRow := range repsBySetID[setRow.ID] {
 			var samples any
 			var metrics any
 

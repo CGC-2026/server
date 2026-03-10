@@ -41,12 +41,21 @@ func CreateWorkoutSessionSet(ctx context.Context, store *data.Store, userID stri
 
 	var createdSet db.WorkoutSessionSet
 
+	startTime := time.Now()
+	if dto.StartTime != nil && !dto.StartTime.IsZero() {
+		startTime = *dto.StartTime
+	}
+	endTime := time.Now()
+	if dto.EndTime != nil && !dto.EndTime.IsZero() {
+		endTime = *dto.EndTime
+	}
+
 	err = store.WithTransaction(ctx, func(q *db.Queries) error {
 		setRow, err := q.CreateWorkoutSessionSet(ctx, db.CreateWorkoutSessionSetParams{
 			WorkoutSessionID: sessionID,
 			SetNumber:        dto.SetNumber,
-			StartTime:        helpers.NewNullTime(dto.StartTime),
-			EndTime:          helpers.NewNullTime(dto.EndTime),
+			StartTime:        helpers.NewNullTime(&startTime),
+			EndTime:          helpers.NewNullTime(&endTime),
 		})
 		if err != nil {
 			return err

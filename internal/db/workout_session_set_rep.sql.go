@@ -55,6 +55,44 @@ func (q *Queries) CreateWorkoutSessionSetRep(ctx context.Context, arg CreateWork
 	return i, err
 }
 
+const getWorkoutSessionSetRepsBySessionID = `-- name: GetWorkoutSessionSetRepsBySessionID :many
+SELECT r.id, r.workout_session_set_id, r.rep_number, r.start_time, r.end_time, r.samples, r.metrics, r.created_at, r.updated_at
+FROM workout_session_set_rep r
+JOIN workout_session_set s ON s.id = r.workout_session_set_id
+WHERE s.workout_session_id = $1
+ORDER BY s.set_number ASC, r.rep_number ASC
+`
+
+func (q *Queries) GetWorkoutSessionSetRepsBySessionID(ctx context.Context, workoutSessionID string) ([]WorkoutSessionSetRep, error) {
+	rows, err := q.db.Query(ctx, getWorkoutSessionSetRepsBySessionID, workoutSessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WorkoutSessionSetRep
+	for rows.Next() {
+		var i WorkoutSessionSetRep
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkoutSessionSetID,
+			&i.RepNumber,
+			&i.StartTime,
+			&i.EndTime,
+			&i.Samples,
+			&i.Metrics,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getWorkoutSessionSetRepsBySessionSetID = `-- name: GetWorkoutSessionSetRepsBySessionSetID :many
 SELECT id, workout_session_set_id, rep_number, start_time, end_time, samples, metrics, created_at, updated_at
 FROM workout_session_set_rep
