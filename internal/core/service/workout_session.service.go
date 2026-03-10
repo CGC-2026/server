@@ -14,37 +14,29 @@ import (
 )
 
 type CreateWorkoutSessionDTO struct {
-	ID                    string     `json:"id"`
-	UserID                string     `json:"userId"`
-	WorkoutTypeID         string     `json:"workoutTypeId"`
-	CalibrationYawAngle   *float64   `json:"calibrationYawAngle"`
-	CalibrationPitchAngle *float64   `json:"calibrationPitchAngle"`
-	CalibrationRollAngle  *float64   `json:"calibrationRollAngle"`
-	StartTime             *time.Time `json:"startTime"`
+	WorkoutTypeID string     `json:"workout_type_id"`
+	StartTime     *time.Time `json:"start_time"`
 }
 
 type UpdateWorkoutSessionDTO struct {
-	ID                    string     `json:"id"`
-	UserID                string     `json:"userId"`
-	WorkoutTypeID         string     `json:"workoutTypeId"`
-	CalibrationYawAngle   *float64   `json:"calibrationYawAngle"`
-	CalibrationPitchAngle *float64   `json:"calibrationPitchAngle"`
-	CalibrationRollAngle  *float64   `json:"calibrationRollAngle"`
-	StartTime             *time.Time `json:"startTime"`
-	EndTime               *time.Time `json:"endTime"`
+	ID            string     `json:"id"`
+	UserID        string     `json:"user_id"`
+	WorkoutTypeID string     `json:"workout_type_id"`
+	StartTime     *time.Time `json:"start_time"`
+	EndTime       *time.Time `json:"end_time"`
 }
 
 type WorkoutSessionDTO struct {
 	ID                    string     `json:"id"`
-	UserID                string     `json:"userId"`
-	WorkoutTypeID         string     `json:"workoutTypeId"`
-	CalibrationYawAngle   *float64   `json:"calibrationYawAngle"`
-	CalibrationPitchAngle *float64   `json:"calibrationPitchAngle"`
-	CalibrationRollAngle  *float64   `json:"calibrationRollAngle"`
-	StartTime             *time.Time `json:"startTime"`
-	EndTime               *time.Time `json:"endTime"`
-	CreatedAt             time.Time  `json:"createdAt"`
-	UpdatedAt             time.Time  `json:"updatedAt"`
+	UserID                string     `json:"user_id"`
+	WorkoutTypeID         string     `json:"workout_type_id"`
+	CalibrationYawAngle   *float64   `json:"calibration_yaw_angle"`
+	CalibrationPitchAngle *float64   `json:"calibration_pitch_angle"`
+	CalibrationRollAngle  *float64   `json:"calibration_roll_angle"`
+	StartTime             *time.Time `json:"start_time"`
+	EndTime               *time.Time `json:"end_time"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 }
 
 func CreateWorkoutSession(ctx context.Context, store *data.Store, userID string, dto CreateWorkoutSessionDTO) (sqlc.WorkoutSession, error) {
@@ -54,12 +46,21 @@ func CreateWorkoutSession(ctx context.Context, store *data.Store, userID string,
 		startTime = *dto.StartTime
 	}
 
+	calibrations, err := store.Queries.GetUserCalibrationByUserID(ctx, userID)
+	if err != nil {
+		calibrations = sqlc.UserCalibration{
+			StandingYawAngle:   0,
+			StandingPitchAngle: 0,
+			StandingRollAngle:  0,
+		}
+	}
+
 	return store.Queries.CreateWorkoutSession(ctx, sqlc.CreateWorkoutSessionParams{
 		UserID:                userID,
 		WorkoutTypeID:         dto.WorkoutTypeID,
-		CalibrationYawAngle:   helpers.NewNullFloat(dto.CalibrationYawAngle),
-		CalibrationPitchAngle: helpers.NewNullFloat(dto.CalibrationPitchAngle),
-		CalibrationRollAngle:  helpers.NewNullFloat(dto.CalibrationRollAngle),
+		CalibrationYawAngle:   helpers.NewNullFloat(&calibrations.StandingYawAngle),
+		CalibrationPitchAngle: helpers.NewNullFloat(&calibrations.StandingPitchAngle),
+		CalibrationRollAngle:  helpers.NewNullFloat(&calibrations.StandingRollAngle),
 		StartTime:             pgtype.Timestamptz{Time: startTime, Valid: true},
 		EndTime:               pgtype.Timestamptz{Valid: false},
 	})
@@ -80,13 +81,10 @@ func UpdateWorkoutSession(ctx context.Context, store *data.Store, userID string,
 	}
 
 	params := db.UpdateWorkoutSessionParams{
-		ID:                    sessionID,
-		WorkoutTypeID:         helpers.NewNullString(dto.WorkoutTypeID),
-		CalibrationYawAngle:   helpers.NewNullFloat(dto.CalibrationYawAngle),
-		CalibrationPitchAngle: helpers.NewNullFloat(dto.CalibrationPitchAngle),
-		CalibrationRollAngle:  helpers.NewNullFloat(dto.CalibrationRollAngle),
-		StartTime:             helpers.NewNullTime(dto.StartTime),
-		EndTime:               helpers.NewNullTime(dto.EndTime),
+		ID:            sessionID,
+		WorkoutTypeID: helpers.NewNullString(dto.WorkoutTypeID),
+		StartTime:     helpers.NewNullTime(dto.StartTime),
+		EndTime:       helpers.NewNullTime(dto.EndTime),
 	}
 
 	return store.Queries.UpdateWorkoutSession(ctx, params)

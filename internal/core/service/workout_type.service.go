@@ -11,7 +11,7 @@ type WorkoutTypeDTO struct {
 	Name        string          `json:"name"`
 	Description *string         `json:"description"`
 	Config      json.RawMessage `json:"config"`
-	ImageURL    *string         `json:"imageUrl"`
+	ImageURL    *string         `json:"image_url"`
 }
 
 func GetWorkoutTypes(ctx context.Context, store *data.Store) ([]WorkoutTypeDTO, error) {
