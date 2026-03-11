@@ -38,9 +38,9 @@ run:
 
 # Run the application with live reload
 dev:
-	docker-compose up -d pgweb
-	docker-compose up -d db
-	docker-compose up dev; docker-compose down
+	docker compose up -d pgweb
+	docker compose up -d db
+	docker compose up dev; docker compose down
 
 # Run tests
 test:
@@ -87,8 +87,8 @@ migrations-down-to:
 
 ## Seed the database with test data
 db-seed:
-	@echo "Seeding database..."
-	docker compose exec dev sh -c "psql -d $$DATABASE_URL -f db/seeds/seed.sql"
+	@echo "Seeding development data"
+	docker compose exec dev sh -lc 'psql -d "$$DATABASE_URL" -f db/seeds/seed.sql'
 
 ## Generate sqlc code
 sqlc-gen: 

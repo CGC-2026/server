@@ -12,13 +12,12 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, clerk_id, first_name, last_name, email, image_url)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO users (clerk_id, first_name, last_name, email, image_url)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id, clerk_id, first_name, last_name, email, image_url, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID        string      `json:"id"`
 	ClerkID   string      `json:"clerk_id"`
 	FirstName string      `json:"first_name"`
 	LastName  string      `json:"last_name"`
@@ -28,7 +27,6 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
-		arg.ID,
 		arg.ClerkID,
 		arg.FirstName,
 		arg.LastName,
@@ -56,6 +54,26 @@ DELETE FROM users WHERE id = $1
 func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
+}
+
+const getUserByClerkID = `-- name: GetUserByClerkID :one
+SELECT id, clerk_id, first_name, last_name, email, image_url, created_at, updated_at FROM users WHERE clerk_id = $1
+`
+
+func (q *Queries) GetUserByClerkID(ctx context.Context, clerkID string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByClerkID, clerkID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.ClerkID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -133,14 +151,13 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
-SET clerk_id = $2, first_name = $3, last_name = $4, email = $5, image_url = $6, updated_at = NOW()
+SET first_name = $2, last_name = $3, email = $4, image_url = $5, updated_at = NOW()
 WHERE id = $1
 RETURNING id, clerk_id, first_name, last_name, email, image_url, created_at, updated_at
 `
 
 type UpdateUserParams struct {
 	ID        string      `json:"id"`
-	ClerkID   string      `json:"clerk_id"`
 	FirstName string      `json:"first_name"`
 	LastName  string      `json:"last_name"`
 	Email     string      `json:"email"`
@@ -150,7 +167,6 @@ type UpdateUserParams struct {
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.ID,
-		arg.ClerkID,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
