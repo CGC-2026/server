@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"server/internal/data"
 	"server/internal/http/handlers"
+	"server/internal/http/handlers/workout"
 	"server/internal/http/middleware"
 	"server/internal/log"
 )
@@ -52,6 +53,11 @@ func (r *Router) RegisterRoutes() {
 	usersMux := http.NewServeMux()
 	handlers.RegisterUsersRoutes(usersMux, r.logger, r.store)
 	r.mux.Handle("/api/users/", http.StripPrefix("/api/users", middleware.AuthMiddleware(r.logger)(usersMux)))
+
+	// Workouts API
+	workoutMux := http.NewServeMux()
+	workout.RegisterWorkoutRoutes(workoutMux, r.logger, r.store)
+	r.mux.Handle("/api/workouts/", http.StripPrefix("/api/workouts", middleware.AuthMiddleware(r.logger)(workoutMux)))
 
 	r.logger.Info("Routes registered successfully")
 }
