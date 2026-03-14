@@ -24,10 +24,11 @@ COMMANDS_JSON=$(cat <<JSON
     "ECR_REGISTRY=\${APP_IMAGE_URI%%/*}",
     "aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin \$ECR_REGISTRY",
     "DBURL=\$(aws ssm get-parameter --region $AWS_REGION --with-decryption --name /cgc-2026-prod/api/database_url --query Parameter.Value --output text)",
-    "CLERK_SECRET=\$(aws ssm get-parameter --region $AWS_REGION --with-decryption --name /cgc-2026-prod/api/clerk_secret_key --query Parameter.Value --output text)",
+    "CLERK_SECRET_KEY=\$(aws ssm get-parameter --region $AWS_REGION --with-decryption --name /cgc-2026-prod/api/clerk_secret_key --query Parameter.Value --output text)",
+    "CLERK_WEBHOOK_SECRET=\$(aws ssm get-parameter --region $AWS_REGION --with-decryption --name /cgc-2026-prod/api/clerk_webhook_secret --query Parameter.Value --output text)",
     "sudo docker pull $APP_IMAGE_URI",
     "sudo docker rm -f $CONTAINER_NAME || true",
-    "sudo docker run -d --restart unless-stopped --name $CONTAINER_NAME -p 8080:8080 -e PORT=8080 -e DATABASE_URL=\"\$DBURL\" -e CLERK_SECRET_KEY=\"\$CLERK_SECRET\" $APP_IMAGE_URI",
+    "sudo docker run -d --restart unless-stopped --name $CONTAINER_NAME -p 8080:8080 -e PORT=8080 -e DATABASE_URL=\"\$DBURL\" -e CLERK_SECRET_KEY=\"\$CLERK_SECRET_KEY\" -e CLERK_WEBHOOK_SECRET=\"\$CLERK_WEBHOOK_SECRET\" $APP_IMAGE_URI",
     "sleep 2",
     "curl -fsS http://localhost:8080/health"
 ]
