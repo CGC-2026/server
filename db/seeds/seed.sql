@@ -2,6 +2,12 @@
  * Seed data for development environment
  * Run with: psql -d your_database_name -f db/seeds/seed.dev.sql
  */
+TRUNCATE TABLE 
+    workout_session,
+    workout_type,
+    users
+RESTART IDENTITY CASCADE;
+
 
 -- Create a test user
 INSERT INTO users (id, clerk_id, first_name, last_name, email)

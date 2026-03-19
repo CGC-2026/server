@@ -21,5 +21,8 @@ RETURNING *;
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
 
+-- name: DeleteUserByClerkID :exec
+DELETE FROM users WHERE clerk_id = $1;
+
 -- name: ListUsers :many
 SELECT * FROM users ORDER BY last_name, first_name;

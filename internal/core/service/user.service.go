@@ -46,3 +46,12 @@ func HandleCreateUserFromClerk(ctx context.Context, store *data.Store, data json
 
 	return nil
 }
+
+func HandleDeleteUserFromClerk(ctx context.Context, store *data.Store, data json.RawMessage) error {
+	var userData types.ClerkUserData
+	if err := json.Unmarshal(data, &userData); err != nil {
+		return fmt.Errorf("failed to parse user data: %w", err)
+	}
+
+	return store.Queries.DeleteUserByClerkID(ctx, userData.ID)
+}
