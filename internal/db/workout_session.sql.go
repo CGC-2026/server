@@ -65,15 +65,26 @@ SELECT
     ws.id,
     ws.user_id,
     ws.workout_type_id,
-    ws.calibration_yaw_angle,
-    ws.calibration_pitch_angle,
-    ws.calibration_roll_angle,
     ws.start_time,
     ws.end_time,
-    wt.name as workout_type_name
+    wt.name as workout_type_name,
+    COUNT(DISTINCT s.id)::int AS total_sets,
+    COUNT(r.id)::int AS total_reps
 FROM workout_session ws
-JOIN workout_type wt ON ws.workout_type_id = wt.id
+JOIN workout_type wt 
+    ON ws.workout_type_id = wt.id
+LEFT JOIN workout_session_set s
+    ON ws.id = s.workout_session_id
+LEFT JOIN workout_session_set_rep r
+    ON s.id = r.workout_session_set_id
 WHERE ws.user_id = $1
+GROUP BY
+    ws.id,
+    ws.user_id,
+    ws.workout_type_id,
+    wt.name,
+    ws.start_time,
+    ws.end_time
 ORDER BY ws.start_time DESC
 LIMIT $2
 `
@@ -84,15 +95,14 @@ type GetUserWorkoutSessionHistoryParams struct {
 }
 
 type GetUserWorkoutSessionHistoryRow struct {
-	ID                    string             `json:"id"`
-	UserID                string             `json:"user_id"`
-	WorkoutTypeID         string             `json:"workout_type_id"`
-	CalibrationYawAngle   pgtype.Float8      `json:"calibration_yaw_angle"`
-	CalibrationPitchAngle pgtype.Float8      `json:"calibration_pitch_angle"`
-	CalibrationRollAngle  pgtype.Float8      `json:"calibration_roll_angle"`
-	StartTime             pgtype.Timestamptz `json:"start_time"`
-	EndTime               pgtype.Timestamptz `json:"end_time"`
-	WorkoutTypeName       string             `json:"workout_type_name"`
+	ID              string             `json:"id"`
+	UserID          string             `json:"user_id"`
+	WorkoutTypeID   string             `json:"workout_type_id"`
+	StartTime       pgtype.Timestamptz `json:"start_time"`
+	EndTime         pgtype.Timestamptz `json:"end_time"`
+	WorkoutTypeName string             `json:"workout_type_name"`
+	TotalSets       int32              `json:"total_sets"`
+	TotalReps       int32              `json:"total_reps"`
 }
 
 func (q *Queries) GetUserWorkoutSessionHistory(ctx context.Context, arg GetUserWorkoutSessionHistoryParams) ([]GetUserWorkoutSessionHistoryRow, error) {
@@ -108,12 +118,11 @@ func (q *Queries) GetUserWorkoutSessionHistory(ctx context.Context, arg GetUserW
 			&i.ID,
 			&i.UserID,
 			&i.WorkoutTypeID,
-			&i.CalibrationYawAngle,
-			&i.CalibrationPitchAngle,
-			&i.CalibrationRollAngle,
 			&i.StartTime,
 			&i.EndTime,
 			&i.WorkoutTypeName,
+			&i.TotalSets,
+			&i.TotalReps,
 		); err != nil {
 			return nil, err
 		}
@@ -150,32 +159,23 @@ func (q *Queries) GetWorkoutSessionByID(ctx context.Context, id string) (Workout
 const updateWorkoutSession = `-- name: UpdateWorkoutSession :one
 UPDATE workout_session
 SET workout_type_id = COALESCE($1, workout_type_id),
-    calibration_yaw_angle = COALESCE($2, calibration_yaw_angle),
-    calibration_pitch_angle = COALESCE($3, calibration_pitch_angle),
-    calibration_roll_angle = COALESCE($4, calibration_roll_angle),
-    start_time = COALESCE($5, start_time),
-    end_time = COALESCE($6, end_time),
+    start_time = COALESCE($2, start_time),
+    end_time = COALESCE($3, end_time),
     updated_at = NOW()
-WHERE id = $7
+WHERE id = $4
 RETURNING id, user_id, workout_type_id, calibration_yaw_angle, calibration_pitch_angle, calibration_roll_angle, start_time, end_time, created_at, updated_at
 `
 
 type UpdateWorkoutSessionParams struct {
-	WorkoutTypeID         pgtype.Text        `json:"workout_type_id"`
-	CalibrationYawAngle   pgtype.Float8      `json:"calibration_yaw_angle"`
-	CalibrationPitchAngle pgtype.Float8      `json:"calibration_pitch_angle"`
-	CalibrationRollAngle  pgtype.Float8      `json:"calibration_roll_angle"`
-	StartTime             pgtype.Timestamptz `json:"start_time"`
-	EndTime               pgtype.Timestamptz `json:"end_time"`
-	ID                    string             `json:"id"`
+	WorkoutTypeID pgtype.Text        `json:"workout_type_id"`
+	StartTime     pgtype.Timestamptz `json:"start_time"`
+	EndTime       pgtype.Timestamptz `json:"end_time"`
+	ID            string             `json:"id"`
 }
 
 func (q *Queries) UpdateWorkoutSession(ctx context.Context, arg UpdateWorkoutSessionParams) (WorkoutSession, error) {
 	row := q.db.QueryRow(ctx, updateWorkoutSession,
 		arg.WorkoutTypeID,
-		arg.CalibrationYawAngle,
-		arg.CalibrationPitchAngle,
-		arg.CalibrationRollAngle,
 		arg.StartTime,
 		arg.EndTime,
 		arg.ID,

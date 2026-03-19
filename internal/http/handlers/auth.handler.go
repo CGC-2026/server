@@ -85,7 +85,13 @@ func RegisterAuthRoutes(mux *http.ServeMux, logger log.Logger, store *data.Store
 				return
 			}
 			logger.Info("Created user from Clerk webhook")
-
+		case "user.deleted":
+			if err := service.HandleDeleteUserFromClerk(r.Context(), store, event.Data); err != nil {
+				logger.Error("Failed to handle user.deleted: %v", err)
+				responses.JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete user"}, logger)
+				return
+			}
+			logger.Info("Deleted user from Clerk webhook")
 		default:
 			logger.Info("Unhandled webhook event type: %s", event.Type)
 		}
