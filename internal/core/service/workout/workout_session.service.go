@@ -61,6 +61,17 @@ type WorkoutSessionDTO struct {
 	UpdatedAt             time.Time              `json:"updated_at"`
 }
 
+type WorkoutSessionHistoryItemDTO struct {
+	ID              string     `json:"id"`
+	UserID          string     `json:"user_id"`
+	WorkoutTypeID   string     `json:"workout_type_id"`
+	WorkoutTypeName string     `json:"workout_type_name"`
+	StartTime       time.Time  `json:"start_time"`
+	EndTime         *time.Time `json:"end_time"`
+	TotalSets       int32      `json:"total_sets"`
+	TotalReps       int32      `json:"total_reps"`
+}
+
 func CreateWorkoutSession(ctx context.Context, store *data.Store, userID string, dto CreateWorkoutSessionDTO) (sqlc.WorkoutSession, error) {
 
 	startTime := time.Now()
@@ -219,13 +230,38 @@ func UpdateWorkoutSession(ctx context.Context, store *data.Store, userID string,
 
 }
 
-func GetUserWorkoutSessionHistory(ctx context.Context, store *data.Store, userId string, limit int32) ([]db.GetUserWorkoutSessionHistoryRow, error) {
+func GetUserWorkoutSessionHistory(ctx context.Context, store *data.Store, userId string, limit int32) ([]WorkoutSessionHistoryItemDTO, error) {
 	if limit <= 0 {
 		limit = 20
 	}
 
-	return store.Queries.GetUserWorkoutSessionHistory(ctx, db.GetUserWorkoutSessionHistoryParams{
+	rows, err := store.Queries.GetUserWorkoutSessionHistory(ctx, db.GetUserWorkoutSessionHistoryParams{
 		UserID: userId,
 		Limit:  limit,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]WorkoutSessionHistoryItemDTO, 0, len(rows))
+	for _, row := range rows {
+		var endTime *time.Time
+		if row.EndTime.Valid {
+			t := row.EndTime.Time
+			endTime = &t
+		}
+
+		items = append(items, WorkoutSessionHistoryItemDTO{
+			ID:              row.ID,
+			UserID:          row.UserID,
+			WorkoutTypeID:   row.WorkoutTypeID,
+			WorkoutTypeName: row.WorkoutTypeName,
+			StartTime:       row.StartTime.Time,
+			EndTime:         endTime,
+			TotalSets:       row.TotalSets,
+			TotalReps:       row.TotalReps,
+		})
+	}
+
+	return items, nil
 }
