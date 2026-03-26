@@ -13,3 +13,12 @@ variable "environment" {
   type    = string
   default = "prod"
 }
+
+variable "api_log_retention_in_days" {
+  type    = number
+  default = 60
+}
+
+variable "ami_id" {
+  type = string
+}

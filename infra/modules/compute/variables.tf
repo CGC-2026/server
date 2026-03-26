@@ -32,6 +32,10 @@ variable "instance_type" {
 }
 
 variable "aws_region" {
-  type = string
+  type    = string
   default = "ca-central-1"
+}
+
+variable "ami_id" {
+  type = string
 }
