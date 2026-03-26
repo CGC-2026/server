@@ -117,67 +117,67 @@ resource "aws_iam_role_policy_attachment" "attach" {
 # Allow manual control of resources through github actions
 data "aws_iam_policy_document" "github_start_stop" {
 
-    statement {
-      sid = "EC2Describe"
-      effect = "Allow"
-      actions = [ 
-        "ec2:DescribeInstances",
-        "ec2:DescribeInstanceStatus",
-        "ec2:DescribeTags"
-       ]
-       resources = ["*"]
+  statement {
+    sid    = "EC2Describe"
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:DescribeInstanceStatus",
+      "ec2:DescribeTags"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "EC2StartStop"
+    effect = "Allow"
+    actions = [
+      "ec2:StartInstances",
+      "ec2:StopInstances"
+    ]
+    resources = ["arn:aws:ec2:*:*:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:ResourceTag/Project"
+      values   = ["cgc-2026"]
     }
+  }
 
-    statement {
-      sid = "EC2StartStop"
-      effect = "Allow"
-      actions = [
-        "ec2:StartInstances",
-        "ec2:StopInstances"
-      ]
-      resources = ["arn:aws:ec2:*:*:instance/*"]
+  statement {
+    sid    = "RDSDescribe"
+    effect = "Allow"
+    actions = [
+      "rds:DescribeDBInstances",
+      "rds:ListTagsForResource"
+    ]
+    resources = ["*"]
+  }
 
-      condition {
-        test = "StringEquals"
-        variable = "ec2:ResourceTag/Project"
-        values = ["cgc-2026"]
-      }
+  statement {
+    sid    = "RDSStartStop"
+    effect = "Allow"
+    actions = [
+      "rds:StartDBInstance",
+      "rds:StopDBInstance"
+    ]
+    resources = ["arn:aws:rds:*:*:db:*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/Project"
+      values   = ["cgc-2026"]
     }
-
-    statement {
-      sid = "RDSDescribe"
-      effect = "Allow"
-      actions = [
-        "rds:DescribeDBInstances",
-        "rds:ListTagsForResource"
-      ]
-      resources = ["*"]
-    }
-
-    statement {
-      sid = "RDSStartStop"
-      effect = "Allow"
-      actions = [
-        "rds:StartDBInstance",
-        "rds:StopDBInstance"
-      ]
-      resources = ["arn:aws:rds:*:*:db:*"]
-
-      condition {
-        test = "StringEquals"
-        variable = "aws:ResourceTag/Project"
-        values = ["cgc-2026"]
-      }
-    }
+  }
 }
 
 resource "aws_iam_policy" "github_start_stop" {
-  name = "${var.name_prefix}-start-stop-env"
+  name   = "${var.name_prefix}-start-stop-env"
   policy = data.aws_iam_policy_document.github_start_stop.json
   tags   = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "github_start_stop" {
-  role = aws_iam_role.deploy.name 
+  role       = aws_iam_role.deploy.name
   policy_arn = aws_iam_policy.github_start_stop.arn
 }
