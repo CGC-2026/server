@@ -63,6 +63,8 @@ module "compute" {
   ssm_password_param = module.rds.ssm_password_param
 
   app_port = 8080
+
+  ami_id = var.ami_id
 }
 
 output "ec2_instance_id" { value = module.compute.instance_id }
@@ -93,3 +95,16 @@ module "github_oidc" {
 }
 
 output "github_deploy_role_arn" { value = module.github_oidc.deploy_role_arn }
+
+module "logs" {
+  source = "../../modules/logs"
+
+  name_prefix = local.name_prefix
+  tags        = local.tags
+
+  ec2_role_name              = module.compute.role_name
+  api_log_retentions_in_days = var.api_log_retention_in_days
+}
+
+output "api_log_group_name" { value = module.logs.api_log_group_name }
+output "api_log_group_arn" { value = module.logs.api_log_group_arn }

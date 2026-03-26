@@ -38,6 +38,6 @@ variable "private_subnet_cidr_b" {
 }
 
 variable "region" {
-  type = string
+  type    = string
   default = "ca-central-1"
 }
