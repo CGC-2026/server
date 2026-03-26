@@ -102,7 +102,7 @@ locals {
 
 # EC2 instance hosts backend container
 resource "aws_instance" "this" {
-  ami                         = data.aws_ami.al2023.id
+  ami                         = var.ami_id
   instance_type               = var.instance_type
   subnet_id                   = var.public_subnet_id
   vpc_security_group_ids      = [var.ec2_sg_id]
