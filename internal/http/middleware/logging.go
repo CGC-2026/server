@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"server/internal/log"
 	"time"
@@ -54,7 +53,20 @@ func LoggingMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 
 			duration := time.Since(start)
 
-			msg := fmt.Sprintf(
+			if loggingResponseWriter.statusCode >= 400 {
+				logger.Error(
+					"%s %s %d %s %dB category: %s",
+					r.Method,
+					r.URL.RequestURI(),
+					loggingResponseWriter.statusCode,
+					duration,
+					loggingResponseWriter.bytesWritten,
+					statusTextCategory(loggingResponseWriter.statusCode),
+				)
+				return
+			}
+
+			logger.Info(
 				"%s %s %d %s %dB category: %s",
 				r.Method,
 				r.URL.RequestURI(),
@@ -63,13 +75,6 @@ func LoggingMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 				loggingResponseWriter.bytesWritten,
 				statusTextCategory(loggingResponseWriter.statusCode),
 			)
-
-			if loggingResponseWriter.statusCode >= 500 {
-				logger.Error(msg)
-				return
-			}
-
-			logger.Info(msg)
 		})
 	}
 }
