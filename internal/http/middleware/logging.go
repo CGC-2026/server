@@ -31,7 +31,7 @@ func (w *loggingResponseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func statusTextClass(status int) string {
+func statusTextCategory(status int) string {
 	switch {
 	case status >= 500:
 		return "server_error"
@@ -55,13 +55,13 @@ func LoggingMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 			duration := time.Since(start)
 
 			msg := fmt.Sprintf(
-				"%s %s %d %s %dB class=%s",
+				"%s %s %d %s %dB category: %s",
 				r.Method,
 				r.URL.RequestURI(),
 				loggingResponseWriter.statusCode,
 				duration,
 				loggingResponseWriter.bytesWritten,
-				statusTextClass(loggingResponseWriter.statusCode),
+				statusTextCategory(loggingResponseWriter.statusCode),
 			)
 
 			if loggingResponseWriter.statusCode >= 500 {
