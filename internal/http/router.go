@@ -27,7 +27,7 @@ func New(logger log.Logger, store *data.Store) *Router {
 
 // Handler returns the http.Handler for the router
 func (r *Router) Handler() http.Handler {
-	return r.mux
+	return middleware.LoggingMiddleware(r.logger)(r.mux)
 }
 
 // RegisterRoutes registers all application routes

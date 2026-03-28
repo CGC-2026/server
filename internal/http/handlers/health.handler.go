@@ -18,8 +18,6 @@ type Response struct {
 // RegisterRoutes registers health check routes
 func RegisterHealthRoutes(mux *http.ServeMux, logger log.Logger) {
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		logger.Info("Health check requested")
-
 		response := Response{
 			Status:      "OK",
 			Description: "The server is running",
