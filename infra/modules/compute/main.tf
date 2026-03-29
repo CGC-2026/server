@@ -1,20 +1,3 @@
-
-# Machine Image
-data "aws_ami" "al2023" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-2023.*-kernel-6.1-x86_64"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-}
-
 # IAM role for EC2
 data "aws_iam_policy_document" "ec2_assume" {
   statement {
@@ -114,4 +97,17 @@ resource "aws_instance" "this" {
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-ec2"
   })
+}
+
+resource "aws_eip" "this" {
+  domain = "vpc"
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-eip"
+  })
+}
+
+resource "aws_eip_association" "this" {
+  instance_id   = aws_instance.this.id
+  allocation_id = aws_eip.this.id
 }
