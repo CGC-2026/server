@@ -62,9 +62,9 @@ module "compute" {
   ssm_username_param = module.rds.ssm_username_param
   ssm_password_param = module.rds.ssm_password_param
 
-  app_port = 8080
-
-  ami_id = var.ami_id
+  app_port      = 8080
+  ami_id        = var.ami_id
+  instance_type = var.instance_type
 }
 
 output "ec2_instance_id" { value = module.compute.instance_id }
