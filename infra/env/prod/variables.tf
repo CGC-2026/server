@@ -22,3 +22,8 @@ variable "api_log_retention_in_days" {
 variable "ami_id" {
   type = string
 }
+
+variable "instance_type" {
+  type    = string
+  default = "t3.xlarge"
+}
