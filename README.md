@@ -1,13 +1,79 @@
 # CGC-2026 Server
 
-A Go-based HTTP server with basic health endpoint.
+Bakcend server for the Garmin Smart Knee Sleeve capstone project. This service powers the mobile application by exposing a REST API to manage the users workout sessions and metrics.
+
+The other key repositories can be found here:
+
+[Mobile Application](https://github.com/CGC-2026/client/)
+
+[Device Firmaware](https://github.com/CGC-2026/device-firmware)
+
+## Overview
+
+At a high level, the backend is responsible for:
+- authenticating requests and associating them with application users
+- storing calibration data used by the knee-tracking workflow
+- creating and managing workout sessions, sets, and reps
+- persisting workout history for providing data analytics in the app
+
+---
+
+## High-level Architecture
+
+![High-level backend architecture](docs/images/high-level-architecture.png)
+
+### Backend request flow
+
+1. The Mobile Application sends HTTPS requests to the backend.
+2. Requests enter the HTTP handler layer
+3. Middle handlers authentication and logging
+4. The service layer applies our desired business logic and dictates application behaviour
+5. The repository layer persists and retrieves data from PostgreSQL.
+
+## Cloud Deployment Architecture
+
+![AWS deployment architecture](docs/images/aws-architecture.png)
+
+The production environment is deployed on AWS and currently uses:
+
+- **Amazon EC2**: Application server
+- **Amazon RDS for PostgreSQL**: Persistent relational storage
+- **Amazon ECR**: Container image storage
+- **Github Actions + OIDC** for CI/CD deployment
+- **Cloudwatch Logs** for backend request and application log collection
+
+The application server runs and a public subnet and communicates with the PostgreSQL database, The database is deployed in private subnets, and both resources exist inside a Virtual Private Cloud (VPC).
+
+---
+
+## Repository Structure
+
+```text
+cmd/              # Application entrypoint
+internal/         # Core go application code
+   core/service/  # Business logic
+   data/          # Connection to repository layer
+   db/            # sqlc-generated database code
+   http/
+      handlers/   # HTTP handlers
+      middleware/ # Auth, logging, and HTTP middleware
+      responses/  # Shared response helpers
+infra/            # AWS Infrastrucuture Configuration (OpenTofu)
+db/
+   migration/     # Goose migrations
+   queries/       # Source SQL for sqlc
+   seeds/         # Development/Production seed data
+scripts/          # CI/CD and production management scripts
+```
+
+---
 
 ## Prerequisites
 
 1. **Go**
    Go 1.25 or higher: <https://go.dev/dl/>
 
-2. **Make**
+2. **Make (Optional)**
    If on windows, a version of make must be installed, Chocolatey package manager is recommended: <https://chocolatey.org/install>
 
    - Once Chocolatey is installed run the following command in an elevated powershell: `choco install make`
@@ -31,7 +97,7 @@ A Go-based HTTP server with basic health endpoint.
 3. **Ensure docker is running and launch container**
 
    ```bash
-   make dev
+   docker compose up --build
    ```
 
 4. **Confirm server status**
@@ -174,7 +240,7 @@ When calling protected endpoints, the following headers are required:
 
 ## Documentation
 
-Go: <https://go.dev/doc/>
-Goose: <https://github.com/pressly/goose>
-Sqlc: <https://docs.sqlc.dev/en/stable/tutorials/getting-started-postgresql.html>
-pgx: <https://github.com/jackc/pgx/wiki/Getting-started-with-pgx>
+- Go: <https://go.dev/doc/>
+- Goose: <https://github.com/pressly/goose>
+- Sqlc: <https://docs.sqlc.dev/en/stable/tutorials/getting-started-postgresql.html>
+- pgx: <https://github.com/jackc/pgx/wiki/Getting-started-with-pgx>
