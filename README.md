@@ -240,7 +240,7 @@ When calling protected endpoints, the following headers are required:
 
 ## Documentation
 
-Go: <https://go.dev/doc/>
-Goose: <https://github.com/pressly/goose>
-Sqlc: <https://docs.sqlc.dev/en/stable/tutorials/getting-started-postgresql.html>
-pgx: <https://github.com/jackc/pgx/wiki/Getting-started-with-pgx>
+- Go: <https://go.dev/doc/>
+- Goose: <https://github.com/pressly/goose>
+- Sqlc: <https://docs.sqlc.dev/en/stable/tutorials/getting-started-postgresql.html>
+- pgx: <https://github.com/jackc/pgx/wiki/Getting-started-with-pgx>
