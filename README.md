@@ -3,7 +3,9 @@
 Bakcend server for the Garmin Smart Knee Sleeve capstone project. This service powers the mobile application by exposing a REST API to manage the users workout sessions and metrics.
 
 The other key repositories can be found here:
+
 [Mobile Application](https://github.com/CGC-2026/client/)
+
 [Device Firmaware](https://github.com/CGC-2026/device-firmware)
 
 ## Overview
