@@ -147,7 +147,8 @@ Alternatively, run `make` to list all available commands
 make build        # Build the application
 make run          # Run the application
 make dev          # Run the application with live reload (docker-compose)
-make test         # Run tests
+make test         # Run the fast test suite
+make test-integration # Run host-side DB-backed integration tests
 make clean        # Clean build artifacts
 
 # Database & migrations
@@ -166,6 +167,63 @@ make db-seed       # Seed the database with test
 # sqlc (DB codegen)
 make sqlc-gen      # Run sqlc generate inside the dev container
 make sqlc-vet      # Run sqlc vet (validate) inside the dev container
+```
+
+## Testing
+
+The backend test setup uses a Go-friendly hybrid structure:
+
+- Fast tests are colocated beside the packages they cover using `*_test.go`
+- Shared helpers live in `internal/testutil`
+- DB-backed integration helpers live in `internal/testutil/testdb`
+
+At a high level, the test suite is split into two layers:
+
+1. **Fast tests**
+   - Middleware, handler, router, and pure service validation coverage
+   - Run with `go test ./...` or `make test`
+
+2. **Integration tests**
+   - Real Postgres-backed tests for service flows that rely on sqlc queries and transactions
+   - Run with `go test -tags=integration ./...` or `make test-integration`
+   - The integration harness applies the existing Goose migrations into an isolated schema before each test run
+
+### Running the fast suite
+
+```bash
+make test
+```
+
+or
+
+```bash
+go test ./...
+```
+
+### Running integration tests locally
+
+1. Start the local Postgres service:
+
+```bash
+docker compose up -d db
+```
+
+2. Ensure the repo `.env` sets `TEST_DATABASE_URL` to a host-resolvable URL.
+
+Example:
+
+```bash
+POSTGRES_PORT=5432
+TEST_POSTGRES_PORT=5433
+TEST_DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${TEST_POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+```
+
+3. Run the integration suite.
+
+Default local command:
+
+```bash
+make test-integration
 ```
 
 ## Live Reload for Development

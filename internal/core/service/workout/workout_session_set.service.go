@@ -25,7 +25,34 @@ type CreateWorkoutSessionSetDTO struct {
 	Reps      []CreateWorkoutSessionSetRepDTO `json:"reps"`
 }
 
+func validateCreateWorkoutSessionSetDTO(dto CreateWorkoutSessionSetDTO) error {
+	if dto.SetNumber <= 0 {
+		return fmt.Errorf("set_number must be greater than 0")
+	}
+
+	for _, rep := range dto.Reps {
+		if rep.RepNumber <= 0 {
+			return fmt.Errorf("rep_number must be greater than 0")
+		}
+		if rep.EndTime < rep.StartTime {
+			return fmt.Errorf("rep end_time must be after start_time")
+		}
+		if !json.Valid(rep.Samples) {
+			return fmt.Errorf("samples must be valid JSON")
+		}
+		if !json.Valid(rep.Metrics) {
+			return fmt.Errorf("metrics must be valid JSON")
+		}
+	}
+
+	return nil
+}
+
 func CreateWorkoutSessionSet(ctx context.Context, store *data.Store, userID string, sessionID string, dto CreateWorkoutSessionSetDTO) (db.WorkoutSessionSet, error) {
+	if err := validateCreateWorkoutSessionSetDTO(dto); err != nil {
+		return db.WorkoutSessionSet{}, err
+	}
+
 	session, err := store.Queries.GetWorkoutSessionByID(ctx, sessionID)
 	if err != nil {
 		return db.WorkoutSessionSet{}, err
@@ -33,10 +60,6 @@ func CreateWorkoutSessionSet(ctx context.Context, store *data.Store, userID stri
 
 	if session.UserID != userID {
 		return db.WorkoutSessionSet{}, fmt.Errorf("forbidden")
-	}
-
-	if dto.SetNumber <= 0 {
-		return db.WorkoutSessionSet{}, fmt.Errorf("set_number must be greater than 0")
 	}
 
 	var createdSet db.WorkoutSessionSet
@@ -62,19 +85,6 @@ func CreateWorkoutSessionSet(ctx context.Context, store *data.Store, userID stri
 		}
 
 		for _, rep := range dto.Reps {
-			if rep.RepNumber <= 0 {
-				return fmt.Errorf("rep_number must be greater than 0")
-			}
-			if rep.EndTime < rep.StartTime {
-				return fmt.Errorf("rep end_time must be after start_time")
-			}
-			if !json.Valid(rep.Samples) {
-				return fmt.Errorf("samples must be valid JSON")
-			}
-			if !json.Valid(rep.Metrics) {
-				return fmt.Errorf("metrics must be valid JSON")
-			}
-
 			_, err := q.CreateWorkoutSessionSetRep(ctx, db.CreateWorkoutSessionSetRepParams{
 				WorkoutSessionSetID: setRow.ID,
 				RepNumber:           rep.RepNumber,

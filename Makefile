@@ -1,4 +1,4 @@
-.PHONY: all help build run dev test clean \
+.PHONY: all help build run dev test test-integration clean \
         migrations-status migrations-version migrations-create \
         migrations-up migrations-down migrations-reset migrations-redo \
         migrations-up-to migrations-down-to \
@@ -12,7 +12,8 @@ help:
 	@echo "  build              Build the application"
 	@echo "  run                Run the application"
 	@echo "  dev                Run the application with live reload (docker-compose)"
-	@echo "  test               Run tests"
+	@echo "  test               Run the fast test suite"
+	@echo "  test-integration   Run host-side integration tests"
 	@echo "  clean              Clean build artifacts"
 	@echo "  migrations-status  Show goose migration status"
 	@echo "  migrations-create  Create a new migration (make migrations-create name=foo)"
@@ -44,7 +45,10 @@ dev:
 
 # Run tests
 test:
-	go test ./...
+	go test -count=1 ./... -v
+
+test-integration:
+	go test -count=1 -p 1 -parallel 1 -tags=integration ./... -v
 
 # Clean build artifacts
 clean:
