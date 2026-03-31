@@ -18,7 +18,11 @@ type Store struct {
 }
 
 func NewStore(ctx context.Context) (*Store, error) {
-	cfg, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
+	return NewStoreFromURL(ctx, os.Getenv("DATABASE_URL"))
+}
+
+func NewStoreFromURL(ctx context.Context, databaseURL string) (*Store, error) {
+	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, err
 	}
