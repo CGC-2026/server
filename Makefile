@@ -48,7 +48,7 @@ test:
 	go test -count=1 ./... -v
 
 test-integration:
-	go test -count=1 -tags=integration ./... -v
+	go test -count=1 -p 1 -parallel 1 -tags=integration ./... -v
 
 # Clean build artifacts
 clean:

@@ -13,8 +13,6 @@ import (
 )
 
 func TestCreateWorkoutSessionPersistsCalibrationValues(t *testing.T) {
-	t.Parallel()
-
 	harness := testdb.New(t)
 	user := testdb.CreateUser(t, harness.Store, "create_session")
 	workoutType := testdb.CreateWorkoutType(t, harness.Store, "create_session")
@@ -41,8 +39,6 @@ func TestCreateWorkoutSessionPersistsCalibrationValues(t *testing.T) {
 }
 
 func TestGetWorkoutSessionByIDReturnsHydratedSetsAndReps(t *testing.T) {
-	t.Parallel()
-
 	harness := testdb.New(t)
 	user := testdb.CreateUser(t, harness.Store, "get_by_id")
 	workoutType := testdb.CreateWorkoutType(t, harness.Store, "get_by_id")
@@ -84,8 +80,6 @@ func TestGetWorkoutSessionByIDReturnsHydratedSetsAndReps(t *testing.T) {
 }
 
 func TestGetUserWorkoutSessionHistoryReturnsOrderedCounts(t *testing.T) {
-	t.Parallel()
-
 	harness := testdb.New(t)
 	user := testdb.CreateUser(t, harness.Store, "history")
 	workoutType := testdb.CreateWorkoutType(t, harness.Store, "history")

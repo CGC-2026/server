@@ -13,8 +13,6 @@ import (
 )
 
 func TestHandleCreateUserFromClerkPersistsExpectedFields(t *testing.T) {
-	t.Parallel()
-
 	harness := testdb.New(t)
 
 	payload := json.RawMessage(`{

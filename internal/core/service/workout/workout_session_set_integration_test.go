@@ -12,8 +12,6 @@ import (
 )
 
 func TestCreateWorkoutSessionSetPersistsSetAndReps(t *testing.T) {
-	t.Parallel()
-
 	harness := testdb.New(t)
 	user := testdb.CreateUser(t, harness.Store, "create_set")
 	workoutType := testdb.CreateWorkoutType(t, harness.Store, "create_set")
